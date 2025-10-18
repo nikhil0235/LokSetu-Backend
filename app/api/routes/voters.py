@@ -9,69 +9,37 @@ router = APIRouter()
 
 @router.get("/", response_model=List[VoterResponse])
 async def list_voters(
-    booth_ids: Optional[str] = Query(None, description="Comma-separated booth IDs"),
-    constituency_id: Optional[int] = Query(None, description="Filter by constituency"),
     user: User = Depends(get_current_user)
 ):
-    """
-    Get voters accessible to the current user.
-    Can filter by booth IDs or constituency.
-    """
+    if user['role'] != "booth_volunteer" :
+        raise HTTPException(status_code=404, detail="User does not allowed to fetch voters")
     voter_service = VoterService()
-
-    # Build scope from user role
-    user_scope = user.assigned_scope
-    filters = {}
-
-
-    print(user_scope)
-    
-    if booth_ids:
-        filters["booth_ids"] = [int(x) for x in booth_ids.split(",")]
-
-    voters = voter_service.search_voters(user_scope=user_scope, filters=filters)
+    voters = voter_service.search_voters(user["assigned_booths"])
     return voters
 
-@router.get("/booth_voters/{booth_id}", response_model=List[VoterResponse])
+@router.get("/booth/{booth_id}", response_model=List[VoterResponse])
 async def list_voters(
-    booth_id: str,
+    booth_id: int,
     user: User = Depends(get_current_user)
 ):
-    """
-    Get voters accessible to the current user.
-    Can filter by booth IDs or constituency.
-    """
+    if user['role'] != "booth_volunteer" :
+        raise HTTPException(status_code=404, detail="User does not allowed to fetch voters")
+    
     voter_service = VoterService()
 
-    # Build scope from user role
-    user_scope = user.assigned_scope
-    
-    print(user_scope)
-    print(str(booth_id))
-
-    if str(booth_id) not in user_scope['booth_ids'] : 
+    if int(booth_id) not in user['assigned_booths'] : 
         raise HTTPException(status_code=404, detail="User does not have access of this booth")
-    
-    user_scope['booth_ids'] = [booth_id]
 
-    voters = voter_service.search_voters(user_scope=user_scope)
+    voters = voter_service.search_voters([booth_id])
     return voters
 
 
 @router.get("/{epic_id}", response_model=VoterResponse)
 async def get_voter(
-    epic_id: str,
-    user: User = Depends(get_current_user)
+    epic_id: str
 ):
-    """
-    Get a single voter by EPIC ID.
-    """
     voter_service = VoterService()
-    voters = voter_service.search_voters(user_scope=user.assigned_scope)
-
-    voter = next((v for v in voters if v["VoterEPIC"] == epic_id), None)
-    if not voter:
-        raise HTTPException(status_code=404, detail="Voter not found or access denied")
+    voter = voter_service.get_voter_by_epic(epic_id)
     return voter
 
 
@@ -81,10 +49,6 @@ async def update_voter(
     payload: VoterUpdate,
     user: User = Depends(get_current_user)
 ):
-    """
-    Update a voter partially using EPIC ID.
-    Only fields in VoterUpdate schema are allowed.
-    """
     voter_service = VoterService()
     changes = payload.dict(exclude_unset=True)
 
