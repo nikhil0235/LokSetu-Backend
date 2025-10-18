@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+voters_data/
+.env.postgres
