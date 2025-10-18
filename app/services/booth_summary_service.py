@@ -1,34 +1,22 @@
+import json
 from collections import defaultdict
 from typing import List, Dict
 from app.models.booth_summary import BoothSummary
+from app.data.connection import get_db_connection
 from app.utils.logger import logger
 from datetime import datetime
 
 class BoothSummaryService:
-    def __init__(self, excel_adapter):
-        self.adapter = excel_adapter
-        self._ensure_booth_summary_sheet()
+    def __init__(self, adapter):
+        self.adapter = adapter
 
-    def _ensure_booth_summary_sheet(self):
-        """Create Booth_Summary sheet if it doesn't exist"""
-        if "Booth_Summary" not in self.adapter.wb.sheetnames:
-            ws = self.adapter.wb.create_sheet("Booth_Summary")
-            headers = [
-                "BoothID", "ConstituencyID", "TotalVoters", "MaleVoters", 
-                "FemaleVoters", "OtherGenderVoters", "VotingPreferenceCounts",
-                "ReligionCounts", "CategoryCounts", "EducationCounts", 
-                "EmploymentCounts", "AgeGroupCounts", "LastUpdated"
-            ]
-            ws.append(headers)
-            self.adapter._save()
-
-    def calculate_booth_summary(self, booth_id: str) -> BoothSummary:
+    def calculate_booth_summary(self, booth_id: int) -> BoothSummary:
         """Calculate aggregations for a specific booth"""
         voters = self.adapter.get_voters(booth_ids=[booth_id])
         
         summary = BoothSummary(
             booth_id=booth_id,
-            constituency_id=voters[0].get("ConstituencyID") if voters else None
+            constituency_id=voters[0].get("constituency_id") if voters else None
         )
         
         if not voters:
@@ -36,16 +24,16 @@ class BoothSummaryService:
 
         # Basic counts
         summary.total_voters = len(voters)
-        summary.male_voters = sum(1 for v in voters if str(v.get("Gender", "")).upper() == "M")
-        summary.female_voters = sum(1 for v in voters if str(v.get("Gender", "")).upper() == "F")
+        summary.male_voters = sum(1 for v in voters if str(v.get("gender", "")).upper() == "M")
+        summary.female_voters = sum(1 for v in voters if str(v.get("gender", "")).upper() == "F")
         summary.other_gender_voters = summary.total_voters - summary.male_voters - summary.female_voters
 
         # Aggregation counts
-        summary.voting_preference_counts = self._count_field(voters, "VotingPreference")
-        summary.religion_counts = self._count_field(voters, "Religion")
-        summary.category_counts = self._count_field(voters, "Category")
-        summary.education_counts = self._count_field(voters, "EducationLevel")
-        summary.employment_counts = self._count_field(voters, "EmploymentStatus")
+        summary.voting_preference_counts = self._count_field(voters, "voting_preference")
+        summary.religion_counts = self._count_field(voters, "religion")
+        summary.category_counts = self._count_field(voters, "category")
+        summary.education_counts = self._count_field(voters, "education_level")
+        summary.employment_counts = self._count_field(voters, "employment_status")
         summary.age_group_counts = self._count_age_groups(voters)
 
         return summary
@@ -63,7 +51,7 @@ class BoothSummaryService:
         """Count voters by age groups"""
         groups = {"18-25": 0, "26-35": 0, "36-50": 0, "51-65": 0, "65+": 0}
         for voter in voters:
-            age = voter.get("Age")
+            age = voter.get("age")
             if age:
                 try:
                     age = int(age)
@@ -81,58 +69,80 @@ class BoothSummaryService:
                     pass
         return groups
 
-    def update_booth_summary(self, booth_id: str):
+    def update_booth_summary(self, booth_id: int):
         """Update summary for a specific booth"""
         summary = self.calculate_booth_summary(booth_id)
         self._save_booth_summary(summary)
         logger.info(f"Updated booth summary for booth {booth_id}")
 
     def _save_booth_summary(self, summary: BoothSummary):
-        """Save booth summary to Excel"""
-        ws = self.adapter.wb["Booth_Summary"]
-        headers = [cell.value for cell in ws[1]]
-        
-        # Find existing row or create new
-        booth_row = None
-        for row in range(2, ws.max_row + 1):
-            if ws.cell(row=row, column=1).value == summary.booth_id:
-                booth_row = row
-                break
-        
-        if not booth_row:
-            booth_row = ws.max_row + 1
-        
-        # Update row with summary data
-        summary_dict = summary.to_dict()
-        for col, header in enumerate(headers, 1):
-            ws.cell(row=booth_row, column=col, value=summary_dict.get(header))
-        
-        self.adapter._save()
+        """Save booth summary to PostgreSQL"""
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute(
+                """
+                INSERT INTO booth_summaries (
+                    booth_id, constituency_id, total_voters, male_voters, female_voters, 
+                    other_gender_voters, voting_preference_counts, religion_counts, 
+                    category_counts, education_counts, employment_counts, age_group_counts, scheme_beneficiaries_counts
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (booth_id) DO UPDATE SET
+                    constituency_id = EXCLUDED.constituency_id,
+                    total_voters = EXCLUDED.total_voters,
+                    male_voters = EXCLUDED.male_voters,
+                    female_voters = EXCLUDED.female_voters,
+                    other_gender_voters = EXCLUDED.other_gender_voters,
+                    voting_preference_counts = EXCLUDED.voting_preference_counts,
+                    religion_counts = EXCLUDED.religion_counts,
+                    category_counts = EXCLUDED.category_counts,
+                    education_counts = EXCLUDED.education_counts,
+                    employment_counts = EXCLUDED.employment_counts,
+                    age_group_counts = EXCLUDED.age_group_counts,
+                    scheme_beneficiaries_counts = EXCLUDED.scheme_beneficiaries_counts,
+                    last_updated = CURRENT_TIMESTAMP
+                """,
+                (
+                    summary.booth_id, summary.constituency_id, summary.total_voters,
+                    summary.male_voters, summary.female_voters, summary.other_gender_voters,
+                    json.dumps(summary.voting_preference_counts),
+                    json.dumps(summary.religion_counts),
+                    json.dumps(summary.category_counts),
+                    json.dumps(summary.education_counts),
+                    json.dumps(summary.employment_counts),
+                    json.dumps(summary.age_group_counts),
+                    json.dumps(summary.scheme_beneficiaries_counts)
+                )
+            )
+            conn.commit()
 
-    def get_booth_summaries(self, booth_ids: List[str] = None) -> List[BoothSummary]:
+    def get_booth_summaries(self, booth_ids: List[int] = None) -> List[BoothSummary]:
         """Get booth summaries with optional filtering"""
-        if "Booth_Summary" not in self.adapter.wb.sheetnames:
-            return []
-        
-        ws = self.adapter.wb["Booth_Summary"]
-        rows = list(ws.iter_rows(min_row=2, values_only=True))
-        headers = [cell.value for cell in ws[1]]
-        
-        summaries = []
-        for row in rows:
-            if row[0]:  # BoothID exists
-                data = dict(zip(headers, row))
-                # print(data)
-                if not booth_ids or str(data["BoothID"]) in booth_ids:
-                    summaries.append(BoothSummary.from_dict(data))
-        
-        return summaries
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            
+            query = "SELECT * FROM booth_summaries WHERE 1=1"
+            params = []
+            
+            if booth_ids:
+                placeholders = ','.join(['%s'] * len(booth_ids))
+                query += f" AND booth_id IN ({placeholders})"
+                params.extend(booth_ids)
+            
+            cursor.execute(query, params)
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            
+            summaries = []
+            for row in rows:
+                data = dict(zip(columns, row))
+                summaries.append(BoothSummary.from_dict(data))
+            
+            return summaries
 
-    def refresh_all_summaries(self):
+    def refresh_all_summaries(self, booth_ids):
         """Recalculate all booth summaries"""
-        voters = self.adapter.get_voters()
-        booth_ids = set(v.get("BoothID") for v in voters if v.get("BoothID"))
         for booth_id in booth_ids:
-            self.update_booth_summary(str(booth_id))
+            self.update_booth_summary(booth_id)
         
         logger.info(f"Refreshed summaries for {len(booth_ids)} booths")

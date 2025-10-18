@@ -306,6 +306,7 @@ CREATE TABLE booth_summaries (
     education_counts JSONB,
     employment_counts JSONB,
     age_group_counts JSONB,
+    scheme_beneficiaries_counts JSONB,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

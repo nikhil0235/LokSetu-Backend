@@ -1,128 +1,129 @@
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field
+import datetime
 
 class VoterBase(BaseModel):
-    ConstituencyID: int
-    ConstituencyName: Optional[str]
-    StateName: Optional[str]
-    BlockName: Optional[str]
-    PanchayatName: Optional[str]
-    BoothID: int
-    BoothNumber: Optional[int]
-    BoothLocation: Optional[str]
-    PartNo: Optional[str]
+    constituency_id: int
+    constituency_name: Optional[str]
+    state_name: Optional[str]
+    block_name: Optional[str]
+    panchayat_name: Optional[str]
+    booth_id: int
+    booth_number: Optional[int]
+    booth_location: Optional[str]
+    part_number: Optional[str]
 
-    VoterEPIC: str = Field(..., description="Unique voter EPIC ID")
-    SerialNoInList: Optional[int]
+    epic_id: str = Field(..., description="Unique voter EPIC ID")
+    serial_no_in_list: Optional[int]
 
-    Voter_fName: Optional[str]
-    Voter_lName: Optional[str]
-    Voter_fName_Hin: Optional[str]
-    Voter_lName_Hin: Optional[str]
+    voter_fname: Optional[str]
+    voter_lname: Optional[str]
+    voter_fname_hin: Optional[str]
+    voter_lname_hin: Optional[str]
 
-    Relation: Optional[str]
-    Guardian_fName: Optional[str]
-    Guardian_lName: Optional[str]
-    Guardian_fName_Hin: Optional[str]
-    Guardian_lName_Hin: Optional[str]
+    relation: Optional[str]
+    guardian_fname: Optional[str]
+    guardian_lname: Optional[str]
+    guardian_fname_hin: Optional[str]
+    guardian_lname_hin: Optional[str]
 
-    HouseNo: Optional[Any]
-    Gender: Optional[str]
-    DOB: Optional[Any]
-    Age: Optional[int]
+    house_no: Optional[Any]
+    gender: Optional[str]
+    dob: Optional[Any]
+    age: Optional[int]
 
-    Mobile: Optional[Any]
-    EmailId: Optional[str]
+    mobile: Optional[Any]
+    email_id: Optional[str]
 
-    LastVotedParty: Optional[str]
-    VotingPreference: Optional[str]
-    CertaintyOfVote: Optional[bool]
-    VoteType: Optional[str]
-    Availability: Optional[str]
+    last_voted_party: Optional[str]
+    voting_preference: Optional[str]
+    certainty_of_vote: Optional[bool]
+    vote_type: Optional[str]
+    availability: Optional[str]
 
-    Religion: Optional[str]
-    Category: Optional[str]
-    OBCSubtype: Optional[str]
-    Caste: Optional[str]
-    LanguagePref: Optional[str]
+    religion: Optional[str]
+    category: Optional[str]
+    obc_subtype: Optional[str]
+    caste: Optional[str]
+    language_pref: Optional[str]
 
-    EducationLevel: Optional[str]
-    EmploymentStatus: Optional[str]
-    GovtJobType: Optional[str]
-    GovtJobGroup: Optional[str]
-    JobRole: Optional[str]
+    education_level: Optional[str]
+    employment_status: Optional[str]
+    govt_job_type: Optional[str]
+    govt_job_group: Optional[str]
+    job_role: Optional[str]
 
-    MonthlySalaryRange: Optional[str]
-    PrivateJobRole: Optional[str]
-    PrivateSalaryRange: Optional[str]
+    monthly_salary_range: Optional[str]
+    private_job_role: Optional[str]
+    private_salary_range: Optional[str]
 
-    SelfEmployedService: Optional[str]
-    BusinessType: Optional[str]
-    BusinessTurnoverRange: Optional[str]
-    GigWorkerRole: Optional[str]
+    self_employed_service: Optional[str]
+    business_type: Optional[str]
+    business_turnover_range: Optional[str]
+    gig_worker_role: Optional[str]
 
-    ResidingIn: Optional[str]
-    OtherCity: Optional[str]
-    PermanentInBihar: Optional[bool]
-    Migrated: Optional[bool]
-    Feedback: Optional[Dict[str, Any]] = None
-    VerificationStatus: Optional[bool]
-    CreatedAt: Optional[str]
-    UpdatedAt: Optional[str]
+    residing_in: Optional[str]
+    other_city: Optional[str]
+    permanent_in_bihar: Optional[bool]
+    migrated: Optional[bool]
+    feedback: Optional[Dict[str, Any]] = None
+    verification_status: Optional[bool]
+    created_at: Optional[datetime.datetime]
+    updated_at: Optional[datetime.datetime]
     
     # Additional fields
-    AdditionalComments: Optional[str] = None
-    AddressNotes: Optional[str] = None
-    AddressProof: Optional[str] = None
-    Area: Optional[str] = None
-    BusinessName: Optional[str] = None
-    BusinessTypeOther: Optional[str] = None
-    CasteOther: Optional[str] = None
-    CommunicationLanguage: Optional[str] = None
-    CommunityDetails: Optional[str] = None
-    CommunityParticipation: Optional[str] = None
-    CompanyName: Optional[str] = None
-    CropType: Optional[str] = None
-    CurrentLocation: Optional[str] = None
-    CustomRelationName: Optional[str] = None
-    DataConsent: Optional[bool] = None
-    DevelopmentSuggestions: Optional[str] = None
-    DigitalCreatorCategory: Optional[str] = None
-    DigitalCreatorChannelName: Optional[str] = None
-    DigitalCreatorContentType: Optional[str] = None
-    DigitalCreatorFollowers: Optional[str] = None
-    DigitalCreatorIncome: Optional[str] = None
-    DigitalCreatorOtherCategory: Optional[str] = None
-    DigitalCreatorOtherPlatform: Optional[str] = None
-    DigitalCreatorPlatform: Optional[str] = None
-    FamilyContactNumber: Optional[str] = None
-    FamilyContactPerson: Optional[str] = None
-    FamilyHeadId: Optional[str] = None
-    FamilyRelation: Optional[str] = None
-    FamilyVotesTogether: Optional[bool] = None
-    FirstTimeVoter: Optional[bool] = None
-    GovtSchemes: Optional[str] = None
-    HouseType: Optional[str] = None
-    InfluencedByLeaders: Optional[str] = None
-    IsPartyWorker: Optional[bool] = None
-    IssuesFaced: Optional[str] = None
-    LandHolding: Optional[str] = None
-    Landmark: Optional[str] = None
-    LanguageOther: Optional[str] = None
-    MigrationReason: Optional[str] = None
-    MlaSatisfaction: Optional[str] = None
-    MostImportantIssue: Optional[str] = None
-    OtherIssues: Optional[str] = None
-    PartyWorkerOtherParty: Optional[str] = None
-    PartyWorkerParty: Optional[str] = None
-    PinCode: Optional[str] = None
-    PostOffice: Optional[str] = None
-    SalaryRange: Optional[str] = None
-    Street: Optional[str] = None
-    UnemploymentReason: Optional[str] = None
-    VillageWard: Optional[str] = None
-    WorkExperience: Optional[str] = None
-    YearsSinceMigration: Optional[int] = None
+    additional_comments: Optional[str] = None
+    address_notes: Optional[str] = None
+    address_proof: Optional[str] = None
+    area: Optional[str] = None
+    business_name: Optional[str] = None
+    business_type_other: Optional[str] = None
+    caste_other: Optional[str] = None
+    communication_language: Optional[str] = None
+    community_details: Optional[str] = None
+    community_participation: Optional[str] = None
+    company_name: Optional[str] = None
+    crop_type: Optional[str] = None
+    current_location: Optional[str] = None
+    custom_relation_name: Optional[str] = None
+    data_consent: Optional[bool] = None
+    development_suggestions: Optional[str] = None
+    digital_creator_category: Optional[str] = None
+    digital_creator_channel_name: Optional[str] = None
+    digital_creator_content_type: Optional[str] = None
+    digital_creator_followers: Optional[str] = None
+    digital_creator_income: Optional[str] = None
+    digital_creator_other_category: Optional[str] = None
+    digital_creator_other_platform: Optional[str] = None
+    digital_creator_platform: Optional[str] = None
+    family_contact_number: Optional[str] = None
+    family_contact_person: Optional[str] = None
+    family_head_id: Optional[str] = None
+    family_relation: Optional[str] = None
+    family_votes_together: Optional[bool] = None
+    first_time_voter: Optional[bool] = None
+    govt_schemes: Optional[str] = None
+    house_type: Optional[str] = None
+    influenced_by_leaders: Optional[str] = None
+    is_party_worker: Optional[bool] = None
+    issues_faced: Optional[str] = None
+    land_holding: Optional[str] = None
+    landmark: Optional[str] = None
+    language_other: Optional[str] = None
+    migration_reason: Optional[str] = None
+    mla_satisfaction: Optional[str] = None
+    most_important_issue: Optional[str] = None
+    other_issues: Optional[str] = None
+    party_worker_other_party: Optional[str] = None
+    party_worker_party: Optional[str] = None
+    pin_code: Optional[str] = None
+    post_office: Optional[str] = None
+    salary_range: Optional[str] = None
+    street: Optional[str] = None
+    unemployment_reason: Optional[str] = None
+    village_ward: Optional[str] = None
+    work_experience: Optional[str] = None
+    years_since_migration: Optional[int] = None
 
 
 class VoterCreate(VoterBase):
@@ -138,110 +139,109 @@ class VoterUpdate(BaseModel):
     Schema for updating an existing voter.
     Fields are optional since partial updates are allowed.
     """
-    ConstituencyName: Optional[str] = None
-    StateName: Optional[str] = None
-    BlockName: Optional[str] = None
-    PanchayatName: Optional[str] = None
-    BoothNumber: Optional[int] = None
-    BoothLocation: Optional[str] = None
-    PartNo: Optional[str] = None
-    SerialNoInList: Optional[int] = None
-    Voter_fName: Optional[str] = None
-    Voter_lName: Optional[str] = None
-    Voter_fName_Hin: Optional[str] = None
-    Voter_lName_Hin: Optional[str] = None
-    Relation: Optional[str] = None
-    Guardian_fName: Optional[str] = None
-    Guardian_lName: Optional[str] = None
-    Guardian_fName_Hin: Optional[str] = None
-    Guardian_lName_Hin: Optional[str] = None
-    HouseNo: Optional[Any] = None
-    Gender: Optional[str] = None
-    DOB: Optional[Any] = None
-    Age: Optional[int] = None
-    Mobile: Optional[Any] = None
-    EmailId: Optional[str] = None
-    LastVotedParty: Optional[str] = None
-    VotingPreference: Optional[str] = None
-    CertaintyOfVote: Optional[bool] = None
-    VoteType: Optional[str] = None
-    Availability: Optional[str] = None
-    Religion: Optional[str] = None
-    Category: Optional[str] = None
-    OBCSubtype: Optional[str] = None
-    Caste: Optional[str] = None
-    LanguagePref: Optional[str] = None
-    EducationLevel: Optional[str] = None
-    EmploymentStatus: Optional[str] = None
-    GovtJobType: Optional[str] = None
-    GovtJobGroup: Optional[str] = None
-    JobRole: Optional[str] = None
-    MonthlySalaryRange: Optional[str] = None
-    PrivateJobRole: Optional[str] = None
-    PrivateSalaryRange: Optional[str] = None
-    SelfEmployedService: Optional[str] = None
-    BusinessType: Optional[str] = None
-    BusinessTurnoverRange: Optional[str] = None
-    GigWorkerRole: Optional[str] = None
-    ResidingIn: Optional[str] = None
-    OtherCity: Optional[str] = None
-    PermanentInBihar: Optional[bool] = None
-    Migrated: Optional[bool] = None
-    Feedback: Optional[Dict[str, Any]] = None
-    VerificationStatus: Optional[bool] = None
-    AdditionalComments: Optional[str] = None
-    AddressNotes: Optional[str] = None
-    AddressProof: Optional[str] = None
-    Area: Optional[str] = None
-    BusinessName: Optional[str] = None
-    BusinessTypeOther: Optional[str] = None
-    CasteOther: Optional[str] = None
-    CommunicationLanguage: Optional[str] = None
-    CommunityDetails: Optional[str] = None
-    CommunityParticipation: Optional[str] = None
-    CompanyName: Optional[str] = None
-    CropType: Optional[str] = None
-    CurrentLocation: Optional[str] = None
-    CustomRelationName: Optional[str] = None
-    DataConsent: Optional[bool] = None
-    DevelopmentSuggestions: Optional[str] = None
-    DigitalCreatorCategory: Optional[str] = None
-    DigitalCreatorChannelName: Optional[str] = None
-    DigitalCreatorContentType: Optional[str] = None
-    DigitalCreatorFollowers: Optional[str] = None
-    DigitalCreatorIncome: Optional[str] = None
-    DigitalCreatorOtherCategory: Optional[str] = None
-    DigitalCreatorOtherPlatform: Optional[str] = None
-    DigitalCreatorPlatform: Optional[str] = None
-    FamilyContactNumber: Optional[str] = None
-    FamilyContactPerson: Optional[str] = None
-    FamilyHeadId: Optional[str] = None
-    FamilyRelation: Optional[str] = None
-    FamilyVotesTogether: Optional[bool] = None
-    FirstTimeVoter: Optional[bool] = None
-    GovtSchemes: Optional[str] = None
-    HouseType: Optional[str] = None
-    InfluencedByLeaders: Optional[str] = None
-    IsPartyWorker: Optional[bool] = None
-    IssuesFaced: Optional[str] = None
-    LandHolding: Optional[str] = None
-    Landmark: Optional[str] = None
-    LanguageOther: Optional[str] = None
-    MigrationReason: Optional[str] = None
-    MlaSatisfaction: Optional[str] = None
-    MostImportantIssue: Optional[str] = None
-    OtherIssues: Optional[str] = None
-    PartyWorkerOtherParty: Optional[str] = None
-    PartyWorkerParty: Optional[str] = None
-    PinCode: Optional[str] = None
-    PostOffice: Optional[str] = None
-    SalaryRange: Optional[str] = None
-    Street: Optional[str] = None
-    UnemploymentReason: Optional[str] = None
-    VillageWard: Optional[str] = None
-    WorkExperience: Optional[str] = None
-    YearsSinceMigration: Optional[int] = None
-
+    constituency_name: Optional[str] = None
+    state_name: Optional[str] = None
+    block_name: Optional[str] = None
+    panchayat_name: Optional[str] = None
+    booth_number: Optional[int] = None
+    booth_location: Optional[str] = None
+    part_number: Optional[str] = None
+    serial_no_in_list: Optional[int] = None
+    voter_fname: Optional[str] = None
+    voter_lname: Optional[str] = None
+    voter_fname_hin: Optional[str] = None
+    voter_lname_hin: Optional[str] = None
+    relation: Optional[str] = None
+    guardian_fname: Optional[str] = None
+    guardian_lname: Optional[str] = None
+    guardian_fname_hin: Optional[str] = None
+    guardian_lname_hin: Optional[str] = None
+    house_no: Optional[Any] = None
+    gender: Optional[str] = None
+    dob: Optional[Any] = None
+    age: Optional[int] = None
+    mobile: Optional[Any] = None
+    email_id: Optional[str] = None
+    last_voted_party: Optional[str] = None
+    voting_preference: Optional[str] = None
+    certainty_of_vote: Optional[bool] = None
+    vote_type: Optional[str] = None
+    availability: Optional[str] = None
+    religion: Optional[str] = None
+    category: Optional[str] = None
+    obc_subtype: Optional[str] = None
+    caste: Optional[str] = None
+    language_pref: Optional[str] = None
+    education_level: Optional[str] = None
+    employment_status: Optional[str] = None
+    govt_job_type: Optional[str] = None
+    govt_job_group: Optional[str] = None
+    job_role: Optional[str] = None
+    monthly_salary_range: Optional[str] = None
+    private_job_role: Optional[str] = None
+    private_salary_range: Optional[str] = None
+    self_employed_service: Optional[str] = None
+    business_type: Optional[str] = None
+    business_turnover_range: Optional[str] = None
+    gig_worker_role: Optional[str] = None
+    residing_in: Optional[str] = None
+    other_city: Optional[str] = None
+    permanent_in_bihar: Optional[bool] = None
+    migrated: Optional[bool] = None
+    feedback: Optional[Dict[str, Any]] = None
+    verification_status: Optional[bool] = None
+    additional_comments: Optional[str] = None
+    address_notes: Optional[str] = None
+    address_proof: Optional[str] = None
+    area: Optional[str] = None
+    business_name: Optional[str] = None
+    business_type_other: Optional[str] = None
+    caste_other: Optional[str] = None
+    communication_language: Optional[str] = None
+    community_details: Optional[str] = None
+    community_participation: Optional[str] = None
+    company_name: Optional[str] = None
+    crop_type: Optional[str] = None
+    current_location: Optional[str] = None
+    custom_relation_name: Optional[str] = None
+    data_consent: Optional[bool] = None
+    development_suggestions: Optional[str] = None
+    digital_creator_category: Optional[str] = None
+    digital_creator_channel_name: Optional[str] = None
+    digital_creator_content_type: Optional[str] = None
+    digital_creator_followers: Optional[str] = None
+    digital_creator_income: Optional[str] = None
+    digital_creator_other_category: Optional[str] = None
+    digital_creator_other_platform: Optional[str] = None
+    digital_creator_platform: Optional[str] = None
+    family_contact_number: Optional[str] = None
+    family_contact_person: Optional[str] = None
+    family_head_id: Optional[str] = None
+    family_relation: Optional[str] = None
+    family_votes_together: Optional[bool] = None
+    first_time_voter: Optional[bool] = None
+    govt_schemes: Optional[str] = None
+    house_type: Optional[str] = None
+    influenced_by_leaders: Optional[str] = None
+    is_party_worker: Optional[bool] = None
+    issues_faced: Optional[str] = None
+    land_holding: Optional[str] = None
+    landmark: Optional[str] = None
+    language_other: Optional[str] = None
+    migration_reason: Optional[str] = None
+    mla_satisfaction: Optional[str] = None
+    most_important_issue: Optional[str] = None
+    other_issues: Optional[str] = None
+    party_worker_other_party: Optional[str] = None
+    party_worker_party: Optional[str] = None
+    pin_code: Optional[str] = None
+    post_office: Optional[str] = None
+    salary_range: Optional[str] = None
+    street: Optional[str] = None
+    unemployment_reason: Optional[str] = None
+    village_ward: Optional[str] = None
+    work_experience: Optional[str] = None
+    years_since_migration: Optional[int] = None
 
 class VoterResponse(VoterBase):
     """

@@ -52,6 +52,6 @@ async def get_any_authenticated_user(current_user: User = Depends(get_current_us
     return current_user
 
 def get_voter_service() -> VoterService:
-    """Get VoterService instance with constituency file"""
+    """Get VoterService instance"""
     return VoterService()
 

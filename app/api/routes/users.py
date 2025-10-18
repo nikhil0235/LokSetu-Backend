@@ -81,7 +81,7 @@ async def update_user(
     current_role = target_user['role']
     print(current_role)
     print(user['role'])
-    if ROLE_RANK[user["role"]] >= ROLE_RANK[current_role]:
+    if ROLE_RANK[user["role"]] > ROLE_RANK[current_role]:
         raise HTTPException(status_code=403, detail="Only higher roles can update this user")
     
     # Map fields and hash password if needed
@@ -122,7 +122,7 @@ async def delete_user(
         raise HTTPException(status_code=404, detail="User not found")
     
     current_role = target_user['role']
-    if ROLE_RANK[user["role"]] < ROLE_RANK[current_role]:
+    if ROLE_RANK[user["role"]] >= ROLE_RANK[current_role]:
         raise HTTPException(status_code=403, detail="Only higher roles can delete this user")
     
     service.delete_user(userId)
@@ -130,133 +130,133 @@ async def delete_user(
     return {"message": f"User {userId} deleted"}
 
 
-@router.get("/assigned-booths")
-async def get_assigned_booths(
-    user: User = Depends(get_current_user)
-):
-    service = UserService()
+# @router.get("/assigned-booths")
+# async def get_assigned_booths(
+#     user: User = Depends(get_current_user)
+# ):
+#     service = UserService()
     
-    if user.role == "super_admin":
-        # Super admin gets all booths (sample implementation)
-        return service.get_all_booths()
-    elif user.role == "district_prabhari":
-        # District Prabhari gets booths from assigned constituencies only
-        if not user.assigned_constituencies:
-            return []
+#     if user.role == "super_admin":
+#         # Super admin gets all booths (sample implementation)
+#         return service.get_all_booths()
+#     elif user.role == "district_prabhari":
+#         # District Prabhari gets booths from assigned constituencies only
+#         if not user.assigned_constituencies:
+#             return []
             
-        # Filter booths by assigned booth IDs if available
-        assigned_booth_ids = user.assigned_scope.get("booth_ids", [])
-        if assigned_booth_ids:
-            # District Prabhari has specific booth assignments
-            import requests
-            all_booths = []
-            try:
-                for constituency_id in user.assigned_constituencies:
-                    url = "https://gateway-voters.eci.gov.in/api/v1/printing-publish/get-part-list"
-                    payload = {
-                        "stateCd": "S04",
-                        "districtCd": "S0429",
-                        "acNumber": str(constituency_id),
-                        "pageNumber": 0,
-                        "pageSize": 100
-                    }
-                    headers = {
-                        "Accept": "*/*",
-                        "content-type": "application/json",
-                        "platform-type": "ECIWEB"
-                    }
-                    resp = requests.post(url, json=payload, headers=headers)
-                    data = resp.json()
-                    if "payload" in data:
-                        # Filter by assigned booth IDs
-                        filtered_booths = [booth for booth in data["payload"] 
-                                         if str(booth.get("id", booth.get("boothId", ""))) in assigned_booth_ids]
-                        all_booths.extend(filtered_booths)
-                return all_booths
-            except:
-                return service.get_user_booths(user.assigned_scope)
-        else:
-            # District Prabhari gets all booths from assigned constituencies
-            import requests
-            all_booths = []
-            try:
-                for constituency_id in user.assigned_constituencies:
-                    url = "https://gateway-voters.eci.gov.in/api/v1/printing-publish/get-part-list"
-                    payload = {
-                        "stateCd": "S04",
-                        "districtCd": "S0429",
-                        "acNumber": str(constituency_id),
-                        "pageNumber": 0,
-                        "pageSize": 100
-                    }
-                    headers = {
-                        "Accept": "*/*",
-                        "content-type": "application/json",
-                        "platform-type": "ECIWEB"
-                    }
-                    resp = requests.post(url, json=payload, headers=headers)
-                    data = resp.json()
-                    if "payload" in data:
-                        all_booths.extend(data["payload"])
-                return all_booths
-            except:
-                return service.get_all_booths()
-    else:  # booth_boy
-        return service.get_user_booths(user.assigned_scope)
+#         # Filter booths by assigned booth IDs if available
+#         assigned_booth_ids = user.assigned_scope.get("booth_ids", [])
+#         if assigned_booth_ids:
+#             # District Prabhari has specific booth assignments
+#             import requests
+#             all_booths = []
+#             try:
+#                 for constituency_id in user.assigned_constituencies:
+#                     url = "https://gateway-voters.eci.gov.in/api/v1/printing-publish/get-part-list"
+#                     payload = {
+#                         "stateCd": "S04",
+#                         "districtCd": "S0429",
+#                         "acNumber": str(constituency_id),
+#                         "pageNumber": 0,
+#                         "pageSize": 100
+#                     }
+#                     headers = {
+#                         "Accept": "*/*",
+#                         "content-type": "application/json",
+#                         "platform-type": "ECIWEB"
+#                     }
+#                     resp = requests.post(url, json=payload, headers=headers)
+#                     data = resp.json()
+#                     if "payload" in data:
+#                         # Filter by assigned booth IDs
+#                         filtered_booths = [booth for booth in data["payload"] 
+#                                          if str(booth.get("id", booth.get("boothId", ""))) in assigned_booth_ids]
+#                         all_booths.extend(filtered_booths)
+#                 return all_booths
+#             except:
+#                 return service.get_user_booths(user.assigned_scope)
+#         else:
+#             # District Prabhari gets all booths from assigned constituencies
+#             import requests
+#             all_booths = []
+#             try:
+#                 for constituency_id in user.assigned_constituencies:
+#                     url = "https://gateway-voters.eci.gov.in/api/v1/printing-publish/get-part-list"
+#                     payload = {
+#                         "stateCd": "S04",
+#                         "districtCd": "S0429",
+#                         "acNumber": str(constituency_id),
+#                         "pageNumber": 0,
+#                         "pageSize": 100
+#                     }
+#                     headers = {
+#                         "Accept": "*/*",
+#                         "content-type": "application/json",
+#                         "platform-type": "ECIWEB"
+#                     }
+#                     resp = requests.post(url, json=payload, headers=headers)
+#                     data = resp.json()
+#                     if "payload" in data:
+#                         all_booths.extend(data["payload"])
+#                 return all_booths
+#             except:
+#                 return service.get_all_booths()
+#     else:  # booth_boy
+#         return service.get_user_booths(user.assigned_scope)
 
 
-@router.get("/assigned-constituencies")
-async def get_assigned_constituencies(
-    user: User = Depends(get_current_user)
-):
-    service = UserService()
+# @router.get("/assigned-constituencies")
+# async def get_assigned_constituencies(
+#     user: User = Depends(get_current_user)
+# ):
+#     service = UserService()
     
-    if user.role == "super_admin":
-        # Super admin gets all constituencies
-        import requests
-        try:
-            response = requests.get(
-                "https://gateway-voters.eci.gov.in/api/v1/common/constituencies",
-                params={"stateCode": "S04"}
-            )
-            return [{
-                'id': r['acId'],
-                'name': r['asmblyName'],
-                'state_name': 'Bihar',
-                'district_name': r.get('districtCd', ''),
-                'assembly_number': r['asmblyNo']
-            } for r in response.json()]
-        except:
-            return service.get_all_constituencies()
-    elif user.role == "district_prabhari":
-        # District Prabhari gets only assigned constituencies
-        import requests
-        try:
-            response = requests.get(
-                "https://gateway-voters.eci.gov.in/api/v1/common/constituencies",
-                params={"stateCode": "S04"}
-            )
-            all_constituencies = response.json()
-            # Filter by assigned constituency IDs for District Prabhari
-            assigned_ids = [str(cid) for cid in user.assigned_constituencies]
-            filtered = [r for r in all_constituencies if str(r['acId']) in assigned_ids]
-            return [{
-                'id': r['acId'],
-                'name': r['asmblyName'],
-                'state_name': 'Bihar',
-                'district_name': r.get('districtCd', ''),
-                'assembly_number': r['asmblyNo']
-            } for r in filtered]
-        except:
-            return service.get_all_constituencies()
-    else:  # booth_boy
-        return []
+#     if user.role == "super_admin":
+#         # Super admin gets all constituencies
+#         import requests
+#         try:
+#             response = requests.get(
+#                 "https://gateway-voters.eci.gov.in/api/v1/common/constituencies",
+#                 params={"stateCode": "S04"}
+#             )
+#             return [{
+#                 'id': r['acId'],
+#                 'name': r['asmblyName'],
+#                 'state_name': 'Bihar',
+#                 'district_name': r.get('districtCd', ''),
+#                 'assembly_number': r['asmblyNo']
+#             } for r in response.json()]
+#         except:
+#             return service.get_all_constituencies()
+#     elif user.role == "district_prabhari":
+#         # District Prabhari gets only assigned constituencies
+#         import requests
+#         try:
+#             response = requests.get(
+#                 "https://gateway-voters.eci.gov.in/api/v1/common/constituencies",
+#                 params={"stateCode": "S04"}
+#             )
+#             all_constituencies = response.json()
+#             # Filter by assigned constituency IDs for District Prabhari
+#             assigned_ids = [str(cid) for cid in user.assigned_constituencies]
+#             filtered = [r for r in all_constituencies if str(r['acId']) in assigned_ids]
+#             return [{
+#                 'id': r['acId'],
+#                 'name': r['asmblyName'],
+#                 'state_name': 'Bihar',
+#                 'district_name': r.get('districtCd', ''),
+#                 'assembly_number': r['asmblyNo']
+#             } for r in filtered]
+#         except:
+#             return service.get_all_constituencies()
+#     else:  # booth_boy
+#         return []
 
 
-@router.get("/test")
-def test_endpoint():
-    logger.info("Test endpoint called")
-    return {"message": "Backend is reachable", "status": "ok"}
+# @router.get("/test")
+# def test_endpoint():
+#     logger.info("Test endpoint called")
+#     return {"message": "Backend is reachable", "status": "ok"}
 
 
 
