@@ -44,7 +44,7 @@ class ExcelAdapter:
         "WorkExperience", "YearsSinceMigration"
     ]
 
-    def __init__(self, constituency_file):
+    def __init__(self, constituency_file=None):
         self.file_path = os.path.join(settings.EXCEL_DIR, constituency_file)
         if not os.path.exists(self.file_path):
             self._create_new_file()

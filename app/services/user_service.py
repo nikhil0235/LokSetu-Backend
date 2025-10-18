@@ -1,65 +1,37 @@
-from app.data.excel_adapter import ExcelAdapter
+from app.data.postgres_adapter import PostgresAdapter
 from app.models.user import User
 from app.core.security import verify_password
 from app.data.excel_cache import ExcelCache
 from app.utils.logger import logger
-import os
-import glob
 
 class UserService:
-    def __init__(self, constituency_file):
-        self.adapter = ExcelAdapter(constituency_file)
+    def __init__(self, constituency_file=None):
+        self.adapter = PostgresAdapter(constituency_file)
 
     def get_user_by_username(self, username: str):
-        users = self.adapter.get_users()
-        for u in users:
-            if u["Username"] == username:
-                return User(
-                    user_id=u["UserID"],
-                    username=u["Username"],
-                    role=u["Role"],
-                    assigned_scope=self._parse_scope(u["AssignedBoothIDs"]),
-                    full_name=u.get("FullName"),
-                    phone=u.get("Phone"),
-                    email=u.get("Email"),
-                    created_by=u.get("Created_by") or u.get("CreatedBy"),
-                    assigned_constituencies=self._parse_constituencies(u.get("AssignedConstituencyIDs", ""))
-                )
-        return None
-
-    def _parse_scope(self, booth_ids_str):
-        if booth_ids_str == "ALL":
-            return {}
-        booth_ids = [x.strip() for x in booth_ids_str.split(",") if x.strip()] if booth_ids_str else []
-        return {"booth_ids": booth_ids}
-    
-    def _parse_constituencies(self, constituency_ids_str):
-        if not constituency_ids_str or constituency_ids_str == "ALL":
-            return []
-        return [x.strip() for x in constituency_ids_str.split(",") if x.strip()]
+        return self.adapter.get_user_by_username(username)
     
     def authenticate_user(self, username: str, password: str):
-        users = self.adapter.get_users()
-        for u in users:
-            if u["Username"] == username:
-                if verify_password(password, u.get("PasswordHash", "")):
-                    return self.get_user_by_username(username)
+        user = self.adapter.get_user_by_username(username)
+        if user != None and user["username"] == username:
+            if verify_password(password, user.get("password_hash", "")):
+                return user
         return None
 
     def get_users_created_by(self, creator_username: str):
         users = self.adapter.get_users()
         created_users = []
         for u in users:
-            if u.get("CreatedBy") == creator_username:
+            if u.get("created_by") == creator_username:
                 created_users.append({
-                    "user_id": u["UserID"],
-                    "username": u["Username"],
-                    "full_name": u.get("FullName"),
-                    "role": u["Role"],
-                    "phone": u.get("Phone"),
-                    "email": u.get("Email"),
-                    "assigned_booths": self._parse_scope(u["AssignedBoothIDs"]),
-                    "assigned_constituencies": self._parse_constituencies(u.get("AssignedConstituencyIDs", ""))
+                    "user_id": u["user_id"],
+                    "username": u["username"],
+                    "full_name": u.get("full_name"),
+                    "role": u["role"],
+                    "phone": u.get("phone"),
+                    "email": u.get("email"),
+                    "assigned_booths": u["assigned_booths"],
+                    "assigned_constituencies": u.get("assigned_constituencies", "")
                 })
         return created_users
 
@@ -68,35 +40,36 @@ class UserService:
         all_users = []
         for u in users:
             all_users.append({
-                "user_id": u["UserID"],
-                "username": u["Username"],
-                "full_name": u.get("FullName"),
-                "role": u["Role"],
-                "phone": u.get("Phone"),
-                "email": u.get("Email"),
-                "assigned_booths": self._parse_scope(u["AssignedBoothIDs"]),
-                "assigned_constituencies": self._parse_constituencies(u.get("AssignedConstituencyIDs", "")),
-                "created_by": u.get("CreatedBy"),
-                "parent_id": u.get("ParentID")
+                "user_id": u["user_id"],
+                "username": u["username"],
+                "full_name": u.get("full_name"),
+                "role": u["role"],
+                "phone": u.get("phone"),
+                "email": u.get("email"),
+                "assigned_booths": u["assigned_booths"],
+                "assigned_constituencies": u.get("assigned_constituencies", ""),
+                "created_by": u.get("created_by")
             })
         return all_users
 
+    def create_user(self, username, role, full_name, phone, email, assigned_booths, assigned_constituencies, password_hash, created_by):
+        user_data = (username, role, full_name, phone, assigned_booths, password_hash, email, created_by, assigned_constituencies)
+        return self.adapter.create_user(user_data)
+    
+    def update_user(self, user_id, updates):
+        return self.adapter.update_user(user_id, updates)
+    
+    def delete_user(self, user_id):
+        return self.adapter.delete_user(user_id)
+    
+    def get_user_by_id(self, user_id):
+        return self.adapter.get_user_by_id(user_id)
+    
     def update_user_password(self, username, hashed_password):
-        ExcelCache.acquire_write_lock(self.adapter.file_path)
-        try:
-            ws = self.adapter.ws_users
-            headers = [c.value for c in ws[1]]
-            username_col = headers.index("Username") + 1
-            password_col = headers.index("PasswordHash") + 1
-
-            for row in range(2, ws.max_row + 1):
-                if ws.cell(row=row, column=username_col).value == username:
-                    ws.cell(row=row, column=password_col, value=hashed_password)
-                    self.adapter._save()
-                    return True
-            return False
-        finally:
-            ExcelCache.release_write_lock(self.adapter.file_path)
+        user = self.get_user_by_username(username)
+        if user:
+            return self.adapter.update_user(user['user_id'], {'password_hash': hashed_password})
+        return False
     
     def get_all_constituencies(self):
         # Get data from current Excel file
@@ -179,3 +152,4 @@ class UserService:
             if voter.get("BoothID") in booth_ids and voter.get("BoothLocation"):
                 booths.add((voter["BoothID"], voter["BoothLocation"]))
         return [{"id": booth_id, "name": booth_location} for booth_id, booth_location in sorted(booths)]
+    

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
 from app.schemas.voter_schema import VoterResponse, VoterUpdate
 from app.services.voter_service import VoterService
-from app.api.deps import get_current_user, get_constituency_file
+from app.api.deps import get_current_user
 from app.models.user import User
 
 router = APIRouter()
@@ -11,14 +11,13 @@ router = APIRouter()
 async def list_voters(
     booth_ids: Optional[str] = Query(None, description="Comma-separated booth IDs"),
     constituency_id: Optional[int] = Query(None, description="Filter by constituency"),
-    user: User = Depends(get_current_user),
-    constituency_file: str = Depends(get_constituency_file)
+    user: User = Depends(get_current_user)
 ):
     """
     Get voters accessible to the current user.
     Can filter by booth IDs or constituency.
     """
-    voter_service = VoterService(constituency_file)
+    voter_service = VoterService()
 
     # Build scope from user role
     user_scope = user.assigned_scope
@@ -36,14 +35,13 @@ async def list_voters(
 @router.get("/booth_voters/{booth_id}", response_model=List[VoterResponse])
 async def list_voters(
     booth_id: str,
-    user: User = Depends(get_current_user),
-    constituency_file: str = Depends(get_constituency_file)
+    user: User = Depends(get_current_user)
 ):
     """
     Get voters accessible to the current user.
     Can filter by booth IDs or constituency.
     """
-    voter_service = VoterService(constituency_file)
+    voter_service = VoterService()
 
     # Build scope from user role
     user_scope = user.assigned_scope
@@ -63,13 +61,12 @@ async def list_voters(
 @router.get("/{epic_id}", response_model=VoterResponse)
 async def get_voter(
     epic_id: str,
-    user: User = Depends(get_current_user),
-    constituency_file: str = Depends(get_constituency_file)
+    user: User = Depends(get_current_user)
 ):
     """
     Get a single voter by EPIC ID.
     """
-    voter_service = VoterService(constituency_file)
+    voter_service = VoterService()
     voters = voter_service.search_voters(user_scope=user.assigned_scope)
 
     voter = next((v for v in voters if v["VoterEPIC"] == epic_id), None)
@@ -82,14 +79,13 @@ async def get_voter(
 async def update_voter(
     epic_id: str,
     payload: VoterUpdate,
-    user: User = Depends(get_current_user),
-    constituency_file: str = Depends(get_constituency_file)
+    user: User = Depends(get_current_user)
 ):
     """
     Update a voter partially using EPIC ID.
     Only fields in VoterUpdate schema are allowed.
     """
-    voter_service = VoterService(constituency_file)
+    voter_service = VoterService()
     changes = payload.dict(exclude_unset=True)
 
     if not changes:

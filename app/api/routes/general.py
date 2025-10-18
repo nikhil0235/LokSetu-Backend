@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, Path, Form
 from typing import List
-from app.api.deps import get_current_user, get_constituency_file
+from app.api.deps import get_current_user
 from app.models.user import User
 import requests
 

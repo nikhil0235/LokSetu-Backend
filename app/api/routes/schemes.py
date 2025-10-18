@@ -3,7 +3,7 @@ from typing import List
 
 from app.schemas.scheme_schema import SchemeCreate, SchemeUpdate, SchemeResponse, SchemeBeneficiaryUpdate
 from app.services.scheme_service import SchemeService
-from app.api.deps import get_current_user, get_constituency_file
+from app.api.deps import get_current_user
 from app.models.user import User
 
 router = APIRouter()
@@ -88,8 +88,7 @@ async def delete_scheme(
 @router.post("/beneficiaries")
 async def update_voter_schemes(
     beneficiary_data: SchemeBeneficiaryUpdate,
-    current_user: User = Depends(get_current_user),
-    constituency_file: str = Depends(get_constituency_file)
+    current_user: User = Depends(get_current_user)
 ):
     """Update voter's scheme beneficiaries (Admin only)"""
     scheme_service = SchemeService()
@@ -97,8 +96,7 @@ async def update_voter_schemes(
     success = scheme_service.update_voter_schemes(
         beneficiary_data.voter_epic,
         beneficiary_data.scheme_ids,
-        current_user,
-        constituency_file
+        current_user
     )
     
     if not success:

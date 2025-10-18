@@ -1,15 +1,13 @@
-"""
-Database connection management for PostgreSQL
-"""
-
 import os
 import json
 import boto3
-import psycopg2
-from psycopg2 import pool
+import psycopg
+from psycopg_pool import ConnectionPool
 from contextlib import contextmanager
 import logging
-from typing import Dict, Optional
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path=".env.postgres")
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +26,6 @@ class DatabaseManager:
             self._setup_connection_pool()
     
     def _get_db_credentials(self):
-        """Get database credentials from AWS Secrets Manager"""
         secret_name = os.getenv('DB_SECRET_NAME')
         region = os.getenv('AWS_REGION', 'us-east-1')
         
@@ -56,24 +53,12 @@ class DatabaseManager:
             raise
     
     def _setup_connection_pool(self):
-        """Setup PostgreSQL connection pool"""
         try:
             credentials = self._get_db_credentials()
             
-            db_config = {
-                'host': os.getenv('DB_HOST', 'localhost'),
-                'port': os.getenv('DB_PORT', '5432'),
-                'database': os.getenv('DB_NAME', 'voter_management'),
-                'user': credentials['username'],
-                'password': credentials['password'],
-                'sslmode': os.getenv('DB_SSLMODE', 'require')
-            }
+            conninfo = f"host={os.getenv('DB_HOST', 'localhost')} port={os.getenv('DB_PORT', '5432')} dbname={os.getenv('DB_NAME', 'voter_management')} user={credentials['username']} password={credentials['password']} sslmode={os.getenv('DB_SSLMODE', 'require')}"
             
-            self._connection_pool = psycopg2.pool.ThreadedConnectionPool(
-                minconn=1,
-                maxconn=20,
-                **db_config
-            )
+            self._connection_pool = ConnectionPool(conninfo, min_size=1, max_size=20)
             
             logger.info("Database connection pool created successfully")
             
@@ -83,7 +68,6 @@ class DatabaseManager:
     
     @contextmanager
     def get_connection(self):
-        """Get connection from pool with automatic cleanup"""
         conn = None
         try:
             conn = self._connection_pool.getconn()
@@ -98,18 +82,14 @@ class DatabaseManager:
                 self._connection_pool.putconn(conn)
     
     def close_all_connections(self):
-        """Close all connections in pool"""
         if self._connection_pool:
-            self._connection_pool.closeall()
+            self._connection_pool.close()
             logger.info("All database connections closed")
 
-# Global database manager instance
 db_manager = DatabaseManager()
 
 def get_db_connection():
-    """Get database connection context manager"""
     return db_manager.get_connection()
 
 def close_db_connections():
-    """Close all database connections"""
     db_manager.close_all_connections()

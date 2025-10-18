@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, Form, BackgroundTasks
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from app.core.config import settings
-from app.api.deps import get_constituency_file
 from app.services.user_service import UserService
 from app.core.security import hash_password
 from app.utils.email_sender import send_email
@@ -18,16 +17,15 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 480
 @router.post("/login")
 def login(
     username: str = Form(...),
-    password: str = Form(...),
-    constituency_file: str = Depends(get_constituency_file)
+    password: str = Form(...)
 ):
-    user_service = UserService(constituency_file)
+    user_service = UserService()
     user = user_service.authenticate_user(username, password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
     token = jwt.encode(
-        {"sub": user.username, "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)},
+        {"sub": user["username"], "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)},
         SECRET_KEY,
         algorithm=ALGORITHM
     )
@@ -35,24 +33,24 @@ def login(
     return {
         "access_token": token, 
         "token_type": "bearer",
-        "fullname": user.full_name,
-        "username": user.username,
-        "role": user.role,
-        "assigned_booths_ids": user.assigned_scope,
-        "user_id": user.user_id,
-        "phone": user.phone,
-        "email": user.email,
-        "created_by": user.created_by
+        "fullname": user["full_name"],
+        "username": user["username"],
+        "role": user["role"],
+        "assigned_booths_ids": user["assigned_booths"],
+        "assigned_constituencies_ids": user["assigned_constituencies"],
+        "user_id": user["user_id"],
+        "phone": user["phone"],
+        "email": user["email"],
+        "created_by": user["created_by"]
     }
 
 
 @router.post("/forgot-password")
 def forgot_password(
     background_tasks: BackgroundTasks,
-    username: str = Form(...),
-    constituency_file: str = Depends(get_constituency_file)
+    username: str = Form(...)
 ):
-    service = UserService(constituency_file)
+    service = UserService()
     user = service.get_user_by_username(username)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -79,7 +77,7 @@ def forgot_password(
 
 
 @router.post("/reset-password")
-def reset_password(token: str = Form(...), new_password: str = Form(...), constituency_file: str = Depends(get_constituency_file)):
+def reset_password(token: str = Form(...), new_password: str = Form(...)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
@@ -88,7 +86,7 @@ def reset_password(token: str = Form(...), new_password: str = Form(...), consti
     except JWTError:
         raise HTTPException(status_code=400, detail="Invalid or expired token")
 
-    service = UserService(constituency_file)
+    service = UserService()
     user = service.get_user_by_username(username)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

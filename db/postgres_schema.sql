@@ -76,13 +76,12 @@ CREATE TABLE users (
     phone VARCHAR(20),
     email VARCHAR(255),
     created_by INTEGER REFERENCES users(user_id),
-    parent_id INTEGER REFERENCES users(user_id),
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- User constituency assignments
+-- User constituency assignmentss
 CREATE TABLE user_constituencies (
     user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
     constituency_id INTEGER REFERENCES constituencies(constituency_id),
