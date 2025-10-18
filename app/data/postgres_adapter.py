@@ -237,6 +237,102 @@ class PostgresAdapter:
                 return user
             return None
 
+    def get_states(self):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM states ORDER BY state_name")
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
+    
+    def get_districts(self, state_id=None):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            query = "SELECT * FROM district WHERE 1=1"
+            params = []
+            
+            if state_id:
+                query += " AND state_id = %s"
+                params.append(state_id)
+            
+            query += " ORDER BY district_name"
+            cursor.execute(query, params)
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
+    
+    def get_constituencies(self, state_id=None, district_id=None):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            query = "SELECT * FROM constituencies WHERE 1=1"
+            params = []
+            
+            if state_id:
+                query += " AND state_id = %s"
+                params.append(state_id)
+            
+            if district_id:
+                query += " AND district_id = %s"
+                params.append(district_id)
+            
+            query += " ORDER BY constituency_name"
+            cursor.execute(query, params)
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
+    
+    def get_blocks(self, constituency_id=None):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            query = "SELECT * FROM blocks WHERE 1=1"
+            params = []
+            
+            if constituency_id:
+                query += " AND constituency_id = %s"
+                params.append(constituency_id)
+            
+            query += " ORDER BY block_name"
+            cursor.execute(query, params)
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
+    
+    def get_panchayats(self, block_id=None):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            query = "SELECT * FROM panchayats WHERE 1=1"
+            params = []
+            
+            if block_id:
+                query += " AND block_id = %s"
+                params.append(block_id)
+            
+            query += " ORDER BY panchayat_name"
+            cursor.execute(query, params)
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
+    
+    def get_booths(self, constituency_id=None, panchayat_id=None):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            query = "SELECT * FROM booths WHERE 1=1"
+            params = []
+            
+            if constituency_id:
+                query += " AND constituency_id = %s"
+                params.append(constituency_id)
+            
+            if panchayat_id:
+                query += " AND panchayat_id = %s"
+                params.append(panchayat_id)
+            
+            query += " ORDER BY booth_number"
+            cursor.execute(query, params)
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
+
     def _log_update(self, epic_id, user_id, old_values, new_values, cursor):
         cursor.execute(
             "INSERT INTO voter_updates (voter_epic_id, user_id, old_values, new_values, created_at) VALUES (%s, %s, %s, %s, %s)",

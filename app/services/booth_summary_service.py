@@ -72,7 +72,6 @@ class BoothSummaryService:
     def update_booth_summary(self, booth_id: int):
         """Update summary for a specific booth"""
         summary = self.calculate_booth_summary(booth_id)
-        print(summary.to_dict())
         self._save_booth_summary(summary)
         logger.info(f"Updated booth summary for booth {booth_id}")
 
