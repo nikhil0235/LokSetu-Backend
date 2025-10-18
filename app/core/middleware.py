@@ -6,7 +6,7 @@ from app.api.deps import fetch_user_from_token
 ROLE_PERMISSIONS = {
     "super_admin": ["*"],
     "admin": ["*"],
-    "booth_volunteer": ["/voters", "/voters/{epic_id}"],
+    "booth_volunteer": ["/voters", "/voters/{epic_id}", "/booth-summaries/refresh", "/booth-summaries"],
     "panchayat_prabhari": ["*"],
     "block_prabhari": ["*"],
     "vidhan_sabha_prabhari": ["*"],
