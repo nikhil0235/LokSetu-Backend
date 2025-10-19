@@ -3,8 +3,9 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 
 # Configuration and settings
-pydantic==2.5.0
-pydantic-settings==2.0.3
+pydantic==2.9.2
+pydantic-core==2.23.4
+pydantic-settings==2.5.2  # newer version compatible with Pydantic 2.9+
 
 # Database
 psycopg2-binary==2.9.9
