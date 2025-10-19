@@ -282,6 +282,14 @@ CREATE TABLE voter_schemes (
 -- AUDIT AND TRACKING TABLES
 -- =============================================
 
+-- OTP codes table for mobile authentication
+CREATE TABLE otp_codes (
+    mobile VARCHAR(20) PRIMARY KEY,
+    otp VARCHAR(6) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Voter updates audit trail
 CREATE TABLE voter_updates (
     update_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

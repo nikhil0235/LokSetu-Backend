@@ -17,6 +17,9 @@ class UserService:
             if verify_password(password, user.get("password_hash", "")):
                 return user
         return None
+    
+    def get_user_by_mobile(self, mobile: str):
+        return self.adapter.get_user_by_mobile(mobile)
 
     def get_users_created_by(self, creator_username: str):
         users = self.adapter.get_users()
