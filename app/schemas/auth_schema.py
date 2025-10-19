@@ -28,3 +28,4 @@ class LoginResponse(BaseModel):
 class OTPResponse(BaseModel):
     message: str
     expires_in: int
+    otp: int

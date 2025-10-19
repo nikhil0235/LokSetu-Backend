@@ -105,12 +105,12 @@ def send_otp(request: MobileLoginRequest):
         raise HTTPException(status_code=404, detail="User not found with this mobile number")
     
     otp_service = OTPService()
-    success = otp_service.send_otp(request.mobile)
+    success, otp_ = otp_service.send_otp(request.mobile)
     
     if not success:
         raise HTTPException(status_code=500, detail="Failed to send OTP")
     
-    return OTPResponse(message="OTP sent successfully", expires_in=300)
+    return OTPResponse(message="OTP sent successfully", expires_in=300, otp=otp_)
 
 @router.post("/verify-otp", response_model=LoginResponse)
 def verify_otp(request: OTPVerifyRequest):

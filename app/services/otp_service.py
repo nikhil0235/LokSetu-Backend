@@ -23,7 +23,7 @@ class OTPService:
     def generate_otp(self) -> str:
         return str(random.randint(100000, 999999))
     
-    def send_otp(self, mobile: str) -> bool:
+    def send_otp(self, mobile: str) -> (bool, str):
         otp = self.generate_otp()
         expires_at = datetime.now() + timedelta(minutes=self.otp_expiry_minutes)
         
@@ -35,14 +35,14 @@ class OTPService:
             
             if success:
                 logger.info(f"OTP sent to {mobile}")
-                return True
+                return True, otp
             else:
                 logger.error(f"Failed to send OTP to {mobile}")
-                return False
+                return False, ""
                 
         except Exception as e:
             logger.error(f"Error sending OTP: {e}")
-            return False
+            return False, ""
     
     def verify_otp(self, mobile: str, otp: str) -> bool:
         return self.adapter.verify_otp(mobile, otp)
