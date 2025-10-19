@@ -17,7 +17,9 @@ ROLE_PERMISSIONS = {
 EXCLUDED_PATHS = [
     "/auth/login",
     "/auth/forgot-password",
-    "/auth/reset-password"
+    "/auth/reset-password",
+    "/auth/send-otp",
+    "/auth/verify-otp"
 ]
 
 class RoleAccessMiddleware(BaseHTTPMiddleware):

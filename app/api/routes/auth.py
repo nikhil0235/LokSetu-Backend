@@ -3,10 +3,10 @@ from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from app.core.config import settings
 from app.services.user_service import UserService
+from app.services.otp_service import OTPService
 from app.core.security import hash_password
 from app.utils.email_sender import send_email
-import os
-import glob
+from app.schemas.auth_schema import MobileLoginRequest, OTPVerifyRequest, LoginResponse, OTPResponse
 
 router = APIRouter()
 
@@ -94,3 +94,54 @@ def reset_password(token: str = Form(...), new_password: str = Form(...)):
     # Update password in Excel
     service.update_user_password(username, hash_password(new_password))
     return {"message": "Password reset successful"}
+
+@router.post("/send-otp", response_model=OTPResponse)
+def send_otp(request: MobileLoginRequest):
+    """Send OTP to mobile number"""
+    user_service = UserService()
+    user = user_service.get_user_by_mobile(request.mobile)
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found with this mobile number")
+    
+    otp_service = OTPService()
+    success = otp_service.send_otp(request.mobile)
+    
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to send OTP")
+    
+    return OTPResponse(message="OTP sent successfully", expires_in=300)
+
+@router.post("/verify-otp", response_model=LoginResponse)
+def verify_otp(request: OTPVerifyRequest):
+    """Verify OTP and login user"""
+    user_service = UserService()
+    user = user_service.get_user_by_mobile(request.mobile)
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    otp_service = OTPService()
+    if not otp_service.verify_otp(request.mobile, request.otp):
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+    
+    # Generate JWT token
+    token = jwt.encode(
+        {"sub": user["username"], "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)},
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
+    
+    return LoginResponse(
+        access_token=token,
+        token_type="bearer",
+        fullname=user["full_name"],
+        username=user["username"],
+        role=user["role"],
+        assigned_booths_ids=user["assigned_booths"],
+        assigned_constituencies_ids=user["assigned_constituencies"],
+        user_id=user["user_id"],
+        phone=user["phone"],
+        email=user["email"],
+        created_by=user["created_by"]
+    )

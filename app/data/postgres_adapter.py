@@ -333,6 +333,48 @@ class PostgresAdapter:
             rows = cursor.fetchall()
             return [dict(zip(columns, row)) for row in rows]
 
+    def store_otp(self, mobile: str, otp: str, expires_at: datetime):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO otp_codes (mobile, otp, expires_at) VALUES (%s, %s, %s) ON CONFLICT (mobile) DO UPDATE SET otp = EXCLUDED.otp, expires_at = EXCLUDED.expires_at, created_at = CURRENT_TIMESTAMP",
+                (mobile, otp, expires_at)
+            )
+            conn.commit()
+    
+    def verify_otp(self, mobile: str, otp: str):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT otp, expires_at FROM otp_codes WHERE mobile = %s AND expires_at > %s",
+                (mobile, datetime.now())
+            )
+            result = cursor.fetchone()
+            if result and result[0] == otp:
+                cursor.execute("DELETE FROM otp_codes WHERE mobile = %s", (mobile,))
+                conn.commit()
+                return True
+            return False
+    
+    def get_user_by_mobile(self, mobile: str):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM users WHERE phone = %s", (mobile,))
+            row = cursor.fetchone()
+            
+            if row:
+                columns = [desc[0] for desc in cursor.description]
+                user = dict(zip(columns, row))
+                
+                cursor.execute("SELECT booth_id FROM user_booths WHERE user_id = %s", (user['user_id'],))
+                user['assigned_booths'] = [r[0] for r in cursor.fetchall()]
+                
+                cursor.execute("SELECT constituency_id FROM user_constituencies WHERE user_id = %s", (user['user_id'],))
+                user['assigned_constituencies'] = [r[0] for r in cursor.fetchall()]
+                
+                return user
+            return None
+
     def _log_update(self, epic_id, user_id, old_values, new_values, cursor):
         cursor.execute(
             "INSERT INTO voter_updates (voter_epic_id, user_id, old_values, new_values, created_at) VALUES (%s, %s, %s, %s, %s)",
