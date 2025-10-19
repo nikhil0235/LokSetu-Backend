@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import voters, users, auth, general, booth_summaries, schemes
 from app.core.middleware import RoleAccessMiddleware
+from app.data.connection import close_db_connections
 
 app = FastAPI(title="Voter Management System")
 
@@ -32,3 +33,7 @@ app.include_router(schemes.router, prefix="/schemes", tags=["Schemes"])
 @app.get("/")
 def root():
     return {"message": "Voter Management Backend is running"}
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    close_db_connections()
