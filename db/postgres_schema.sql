@@ -96,6 +96,43 @@ CREATE TABLE user_booths (
 );
 
 -- =============================================
+-- POLITICAL PARTIES AND ALLIANCES
+-- =============================================
+
+-- Political parties table
+CREATE TABLE parties (
+    party_id SERIAL PRIMARY KEY,
+    party_name VARCHAR(200) NOT NULL,
+    party_code VARCHAR(10) UNIQUE,
+    party_symbol VARCHAR(100),
+    party_type VARCHAR(50) CHECK (party_type IN ('National', 'State', 'Regional', 'Independent')),
+    founded_year INTEGER,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Political alliances table
+CREATE TABLE alliances (
+    alliance_id SERIAL PRIMARY KEY,
+    alliance_name VARCHAR(200) NOT NULL,
+    alliance_code VARCHAR(10),
+    description TEXT,
+    formed_date DATE,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Party-Alliance mapping
+CREATE TABLE party_alliances (
+    party_id INTEGER REFERENCES parties(party_id),
+    alliance_id INTEGER REFERENCES alliances(alliance_id),
+    joined_date DATE,
+    left_date DATE,
+    is_current BOOLEAN DEFAULT true,
+    PRIMARY KEY (party_id, alliance_id)
+);
+
+-- =============================================
 -- SCHEMES MANAGEMENT
 -- =============================================
 
