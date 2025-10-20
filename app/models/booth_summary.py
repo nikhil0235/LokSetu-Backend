@@ -32,7 +32,7 @@ class BoothSummary:
         self.education_counts = education_counts or {}
         self.employment_counts = employment_counts or {}
         self.age_group_counts = age_group_counts or {}
-        self.scheme_beneficiaries_counts = scheme_beneficiaries_counts or {}
+        self.scheme_beneficiaries_counts = scheme_beneficiaries_counts or "{}"
         self.last_updated = last_updated or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     @classmethod
