@@ -3,16 +3,7 @@ from pydantic import BaseModel, Field
 import datetime
 
 class VoterBase(BaseModel):
-    constituency_id: int
-    constituency_name: Optional[str]
-    state_name: Optional[str]
-    block_name: Optional[str]
-    panchayat_name: Optional[str]
     booth_id: int
-    booth_number: Optional[int]
-    booth_location: Optional[str]
-    part_number: Optional[str]
-
     epic_id: str = Field(..., description="Unique voter EPIC ID")
     serial_no_in_list: Optional[int]
 
@@ -139,13 +130,6 @@ class VoterUpdate(BaseModel):
     Schema for updating an existing voter.
     Fields are optional since partial updates are allowed.
     """
-    constituency_name: Optional[str] = None
-    state_name: Optional[str] = None
-    block_name: Optional[str] = None
-    panchayat_name: Optional[str] = None
-    booth_number: Optional[int] = None
-    booth_location: Optional[str] = None
-    part_number: Optional[str] = None
     serial_no_in_list: Optional[int] = None
     voter_fname: Optional[str] = None
     voter_lname: Optional[str] = None
