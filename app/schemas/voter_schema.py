@@ -227,6 +227,31 @@ class VoterUpdate(BaseModel):
     work_experience: Optional[str] = None
     years_since_migration: Optional[int] = None
 
+class VoterBulkUpdateOptions(BaseModel):
+    """Options for bulk update operation"""
+    refresh_booth_summaries: Optional[bool] = True
+    batch_size: Optional[int] = 1000
+
+class VoterBulkUpdate(BaseModel):
+    """Schema for flexible bulk voter updates by any field"""
+    field_updates: Dict[str, Dict[str, Any]] = Field(
+        ..., 
+        description="Field updates in format: {'field_name': {'epic_id': 'new_value', ...}}",
+        example={
+            "voting_preference": {"V001": "BJP", "V002": "Congress"},
+            "mobile": {"V001": "9876543210", "V003": "9988776655"}
+        }
+    )
+    options: Optional[VoterBulkUpdateOptions] = None
+
+class VoterBulkUpdateResponse(BaseModel):
+    """Response schema for bulk update operation"""
+    success: bool
+    updated_counts: Dict[str, int]
+    total_voters_affected: int
+    booth_summaries_refreshed: list[int]
+    message: str
+
 class VoterResponse(VoterBase):
     """
     Full voter response schema returned by the API.

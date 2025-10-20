@@ -12,10 +12,12 @@ class BoothSummary:
         other_gender_voters: int = 0,
         voting_preference_counts: Dict[str, int] = None,
         religion_counts: Dict[str, int] = None,
-        category_counts: Dict[str, int] = None,
+        category_counts: Dict[str, Any] = None,
         education_counts: Dict[str, int] = None,
         employment_counts: Dict[str, int] = None,
         age_group_counts: Dict[str, int] = None,
+        complete_voter_count: int = 0,
+        verified_voter_count: int = 0,
         scheme_beneficiaries_counts: Dict[str, Any] = None,
         last_updated: str = None,
         **kwargs
@@ -32,6 +34,8 @@ class BoothSummary:
         self.education_counts = education_counts or {}
         self.employment_counts = employment_counts or {}
         self.age_group_counts = age_group_counts or {}
+        self.complete_voter_count = complete_voter_count
+        self.verified_voter_count = verified_voter_count
         self.scheme_beneficiaries_counts = scheme_beneficiaries_counts or "{}"
         self.last_updated = last_updated or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -64,6 +68,8 @@ class BoothSummary:
             education_counts=safe_json(data.get("education_counts")),
             employment_counts=safe_json(data.get("employment_counts")),
             age_group_counts=safe_json(data.get("age_group_counts")),
+            complete_voter_count=data.get("complete_voter_count", 0),
+            verified_voter_count=data.get("verified_voter_count", 0),
             scheme_beneficiaries_counts=safe_json(data.get("scheme_beneficiaries_counts")),
             last_updated=str(data.get("last_updated")) if data.get("last_updated") else None
         )
@@ -83,6 +89,8 @@ class BoothSummary:
             "education_counts": self.education_counts,
             "employment_counts": self.employment_counts,
             "age_group_counts": self.age_group_counts,
+            "complete_voter_count": self.complete_voter_count,
+            "verified_voter_count": self.verified_voter_count,
             "scheme_beneficiaries_counts": str(self.scheme_beneficiaries_counts),
             "last_updated": self.last_updated
         }
@@ -101,6 +109,8 @@ class BoothSummary:
             "education_counts": self.education_counts,
             "employment_counts": self.employment_counts,
             "age_group_counts": self.age_group_counts,
+            "complete_voter_count": self.complete_voter_count,
+            "verified_voter_count": self.verified_voter_count,
             "scheme_beneficiaries_counts": self.scheme_beneficiaries_counts,
             "last_updated": self.last_updated
         }

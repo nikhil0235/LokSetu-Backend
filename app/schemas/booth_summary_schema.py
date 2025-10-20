@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 class BoothSummaryResponse(BaseModel):
     booth_id: int
@@ -10,10 +10,12 @@ class BoothSummaryResponse(BaseModel):
     other_gender_voters: int
     voting_preference_counts: Dict[str, int]
     religion_counts: Dict[str, int]
-    category_counts: Dict[str, int]
+    category_counts: Dict[str, Any]
     education_counts: Dict[str, int]
     employment_counts: Dict[str, int]
     age_group_counts: Dict[str, int]
+    complete_voter_count: int
+    verified_voter_count: int
     last_updated: Optional[str]
     scheme_beneficiaries_counts: Optional[str]
     class Config:

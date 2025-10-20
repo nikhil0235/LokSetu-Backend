@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import List, Optional
-from app.schemas.voter_schema import VoterResponse, VoterUpdate
+from typing import List, Optional, Dict, Any
+from app.schemas.voter_schema import VoterResponse, VoterUpdate, VoterBulkUpdate, VoterBulkUpdateResponse
 from app.services.voter_service import VoterService
 from app.api.deps import get_current_user
 from app.models.user import User
@@ -60,3 +60,34 @@ async def update_voter(
         raise HTTPException(status_code=403, detail="Update failed or access denied")
 
     return {"message": f"Voter {epic_id} updated successfully", "updated_fields": changes}
+
+@router.post("/bulk-update", response_model=VoterBulkUpdateResponse)
+async def bulk_update_voters(
+    payload: VoterBulkUpdate,
+    user: User = Depends(get_current_user)
+):
+    """Bulk update voters by any field"""
+    voter_service = VoterService()
+    
+    if not payload.field_updates:
+        raise HTTPException(status_code=400, detail="No field updates provided")
+    
+    try:
+        result = voter_service.bulk_update_voters(
+            user, 
+            payload.field_updates, 
+            payload.options.dict() if payload.options else None
+        )
+        
+        return VoterBulkUpdateResponse(
+            success=True,
+            updated_counts=result['updated_counts'],
+            total_voters_affected=result['total_voters_affected'],
+            booth_summaries_refreshed=result['booth_summaries_refreshed'],
+            message=f"Successfully updated {result['total_voters_affected']} voters across {len(result['updated_counts'])} fields"
+        )
+        
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Bulk update failed: {str(e)}")
