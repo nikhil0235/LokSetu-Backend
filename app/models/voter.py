@@ -5,14 +5,6 @@ class Voter:
         self,
         epic_id: str,
         booth_id: int,
-        constituency_id: int,
-        constituency_name: Optional[str] = None,
-        state_name: Optional[str] = None,
-        block_name: Optional[str] = None,
-        panchayat_name: Optional[str] = None,
-        booth_number: Optional[int] = None,
-        booth_location: Optional[str] = None,
-        part_number: Optional[str] = None,
         serial_no_in_list: Optional[int] = None,
         voter_fname: Optional[str] = None,
         voter_lname: Optional[str] = None,
@@ -119,14 +111,6 @@ class Voter:
     ):
         self.epic_id = epic_id
         self.booth_id = booth_id
-        self.constituency_id = constituency_id
-        self.constituency_name = constituency_name
-        self.state_name = state_name
-        self.block_name = block_name
-        self.panchayat_name = panchayat_name
-        self.booth_number = booth_number
-        self.booth_location = booth_location
-        self.part_number = part_number
         self.serial_no_in_list = serial_no_in_list
         self.voter_fname = voter_fname
         self.voter_lname = voter_lname

@@ -16,7 +16,7 @@ class BoothSummaryService:
         
         summary = BoothSummary(
             booth_id=booth_id,
-            constituency_id=voters[0].get("constituency_id") if voters else None
+            constituency_id=None  # Will be populated from booth table if needed
         )
         
         if not voters:
