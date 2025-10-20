@@ -5,6 +5,31 @@ from app.data.connection import get_db_connection
 from app.utils.logger import logger
 
 class PostgresAdapter:
+    # Voter table columns (excluding epic_id which cannot be updated)
+    VOTER_COLUMNS = {
+        'serial_no_in_list', 'voter_fname', 'voter_lname', 'voter_fname_hin', 'voter_lname_hin',
+        'relation', 'guardian_fname', 'guardian_lname', 'guardian_fname_hin', 'guardian_lname_hin',
+        'house_no', 'street', 'area', 'landmark', 'village_ward', 'pin_code', 'post_office',
+        'gender', 'dob', 'age', 'mobile', 'email_id', 'family_contact_number', 'family_contact_person',
+        'last_voted_party', 'voting_preference', 'certainty_of_vote', 'vote_type', 'availability',
+        'first_time_voter', 'religion', 'category', 'obc_subtype', 'caste', 'caste_other',
+        'language_pref', 'language_other', 'communication_language', 'education_level',
+        'employment_status', 'govt_job_type', 'govt_job_group', 'job_role', 'monthly_salary_range',
+        'private_job_role', 'private_salary_range', 'self_employed_service', 'business_type',
+        'business_type_other', 'business_name', 'business_turnover_range', 'gig_worker_role',
+        'company_name', 'salary_range', 'work_experience', 'unemployment_reason', 'land_holding',
+        'crop_type', 'digital_creator_category', 'digital_creator_platform', 'digital_creator_other_platform',
+        'digital_creator_channel_name', 'digital_creator_content_type', 'digital_creator_followers',
+        'digital_creator_income', 'digital_creator_other_category', 'residing_in', 'current_location',
+        'other_city', 'permanent_in_bihar', 'migrated', 'migration_reason', 'years_since_migration',
+        'family_head_id', 'family_relation', 'family_votes_together', 'custom_relation_name',
+        'house_type', 'is_party_worker', 'party_worker_party', 'party_worker_other_party',
+        'influenced_by_leaders', 'mla_satisfaction', 'most_important_issue', 'issues_faced',
+        'other_issues', 'development_suggestions', 'community_participation', 'community_details',
+        'govt_schemes', 'additional_comments', 'address_notes', 'address_proof', 'data_consent',
+        'verification_status', 'feedback'
+    }
+    
     def __init__(self, constituency_file=None):
         # constituency_file parameter kept for compatibility but not used
         pass
@@ -557,6 +582,57 @@ class PostgresAdapter:
             )
             conn.commit()
             return True
+
+    def bulk_update_voters_by_field(self, field, updates, user_id, batch_size=1000):
+        """Bulk update voters by field with batching for performance"""
+        # Validate field
+        if field not in self.VOTER_COLUMNS:
+            raise ValueError(f"Field '{field}' is not allowed for update")
+        
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            epic_ids = list(updates.keys())
+            total_updated = 0
+            
+            # Process in batches
+            for i in range(0, len(epic_ids), batch_size):
+                batch_ids = epic_ids[i:i + batch_size]
+                batch_updates = {eid: updates[eid] for eid in batch_ids}
+                
+                # Build CASE-WHEN query
+                cases = []
+                params = []
+                for epic_id, value in batch_updates.items():
+                    cases.append("WHEN epic_id = %s THEN %s")
+                    params.extend([epic_id, value])
+                
+                # Add epic_ids for WHERE clause
+                params.extend(batch_ids)
+                placeholders = ','.join(['%s'] * len(batch_ids))
+                
+                query = f"""
+                UPDATE voters 
+                SET {field} = CASE {' '.join(cases)} END,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE epic_id IN ({placeholders})
+                """
+                
+                cursor.execute(query, params)
+                batch_updated = cursor.rowcount
+                total_updated += batch_updated
+            
+            conn.commit()
+            return total_updated
+
+    def get_affected_booth_ids(self, epic_ids):
+        """Get booth IDs for given voter epic IDs"""
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            placeholders = ','.join(['%s'] * len(epic_ids))
+            cursor.execute(f"SELECT DISTINCT booth_id FROM voters WHERE epic_id IN ({placeholders})", epic_ids)
+            return [row[0] for row in cursor.fetchall()]
+
+
 
     def _log_update(self, epic_id, user_id, old_values, new_values, cursor):
         cursor.execute(
