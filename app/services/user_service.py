@@ -34,7 +34,11 @@ class UserService:
                     "phone": u.get("phone"),
                     "email": u.get("email"),
                     "assigned_booths": u["assigned_booths"],
-                    "assigned_constituencies": u.get("assigned_constituencies", "")
+                    "assigned_constituencies": u.get("assigned_constituencies", ""),
+                    "party_id": u.get("party_id"),
+                    "alliance_id": u.get("alliance_id"),
+                    "party_name": u.get("party_name"),
+                    "alliance_name": u.get("alliance_name")
                 })
         return created_users
 
@@ -51,13 +55,18 @@ class UserService:
                 "email": u.get("email"),
                 "assigned_booths": u["assigned_booths"],
                 "assigned_constituencies": u.get("assigned_constituencies", ""),
-                "created_by": u.get("created_by")
+                "created_by": u.get("created_by"),
+                "party_id": u.get("party_id"),
+                "alliance_id": u.get("alliance_id"),
+                "party_name": u.get("party_name"),
+                "alliance_name": u.get("alliance_name")
             })
         return all_users
 
-    def create_user(self, username, role, full_name, phone, email, assigned_booths, assigned_constituencies, password_hash, created_by):
-        user_data = (username, role, full_name, phone, assigned_booths, password_hash, email, created_by, assigned_constituencies)
-        return self.adapter.create_user(user_data)
+    def create_user(self, username, role, full_name, phone, email, assigned_booths, assigned_constituencies, password_hash, created_by, party_id=None, alliance_id=None):
+        user_data = (username, role, full_name, phone, assigned_booths, password_hash, email, created_by, assigned_constituencies, party_id, alliance_id)
+        created_user = self.adapter.create_user(user_data)
+        return created_user
     
     def update_user(self, user_id, updates):
         return self.adapter.update_user(user_id, updates)

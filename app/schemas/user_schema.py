@@ -10,6 +10,8 @@ class UserCreate(BaseModel):
     email: Optional[str] = ""
     assigned_booths: Optional[str] = ""
     assigned_constituencies: Optional[str] = ""
+    party_id: Optional[int] = None
+    alliance_id: Optional[int] = None
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
@@ -20,6 +22,8 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
     assigned_booths: Optional[str] = None
     assigned_constituencies: Optional[str] = None
+    party_id: Optional[int] = None
+    alliance_id: Optional[int] = None
 
 class UserResponse(BaseModel):
     user_id: int
@@ -31,3 +35,7 @@ class UserResponse(BaseModel):
     assigned_booths: List[str]
     assigned_constituencies: List[str]
     created_by: Optional[str]
+    party_id: Optional[int] = None
+    alliance_id: Optional[int] = None
+    party_name: Optional[str] = None
+    alliance_name: Optional[str] = None

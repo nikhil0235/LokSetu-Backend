@@ -7,6 +7,7 @@ from app.services.otp_service import OTPService
 from app.core.security import hash_password
 from app.utils.email_sender import send_email
 from app.schemas.auth_schema import MobileLoginRequest, OTPVerifyRequest, LoginResponse, OTPResponse
+from app.utils.logger import logger
 
 router = APIRouter()
 
@@ -19,30 +20,40 @@ def login(
     username: str = Form(...),
     password: str = Form(...)
 ):
-    user_service = UserService()
-    user = user_service.authenticate_user(username, password)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+    try:
+        user_service = UserService()
+        user = user_service.authenticate_user(username, password)
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid username or password")
 
-    token = jwt.encode(
-        {"sub": user["username"], "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)},
-        SECRET_KEY,
-        algorithm=ALGORITHM
-    )
-    
-    return {
-        "access_token": token, 
-        "token_type": "bearer",
-        "fullname": user["full_name"],
-        "username": user["username"],
-        "role": user["role"],
-        "assigned_booths_ids": user["assigned_booths"],
-        "assigned_constituencies_ids": user["assigned_constituencies"],
-        "user_id": user["user_id"],
-        "phone": user["phone"],
-        "email": user["email"],
-        "created_by": user["created_by"]
-    }
+        token = jwt.encode(
+            {"sub": user["username"], "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)},
+            SECRET_KEY,
+            algorithm=ALGORITHM
+        )
+        
+        return {
+            "access_token": token, 
+            "token_type": "bearer",
+            "fullname": user["full_name"],
+            "username": user["username"],
+            "role": user["role"],
+            "assigned_booths_ids": user["assigned_booths"],
+            "assigned_constituencies_ids": user["assigned_constituencies"],
+            "user_id": user["user_id"],
+            "phone": user["phone"],
+            "email": user["email"],
+            "created_by": user["created_by"],
+            "party_id": user.get("party_id"),
+            "alliance_id": user.get("alliance_id"),
+            "party_name": user.get("party_name"),
+            "alliance_name": user.get("alliance_name")
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Login error for user {username}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Login failed. Please try again later.")
 
 
 @router.post("/forgot-password")
@@ -143,5 +154,9 @@ def verify_otp(request: OTPVerifyRequest):
         user_id=user["user_id"],
         phone=user["phone"],
         email=user["email"],
-        created_by=user["created_by"]
+        created_by=user["created_by"],
+        party_id=user.get("party_id"),
+        alliance_id=user.get("alliance_id"),
+        party_name=user.get("party_name"),
+        alliance_name=user.get("alliance_name")
     )

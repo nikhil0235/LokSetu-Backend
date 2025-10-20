@@ -24,8 +24,13 @@ class LoginResponse(BaseModel):
     phone: Optional[str]
     email: Optional[str]
     created_by: Optional[int]
+    party_id: Optional[int] = None
+    alliance_id: Optional[int] = None
+    party_name: Optional[str] = None
+    alliance_name: Optional[str] = None
 
 class OTPResponse(BaseModel):
     message: str
     expires_in: int
+    otp: Optional[str] = None
     otp: int

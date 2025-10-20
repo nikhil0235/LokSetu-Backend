@@ -77,7 +77,14 @@ class PostgresAdapter:
     def get_users(self):
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users")
+            cursor.execute(
+                """
+                SELECT u.*, p.party_name, a.alliance_name 
+                FROM users u 
+                LEFT JOIN parties p ON u.party_id = p.party_id 
+                LEFT JOIN alliances a ON u.alliance_id = a.alliance_id
+                """
+            )
             columns = [desc[0] for desc in cursor.description]
             rows = cursor.fetchall()
             
@@ -100,7 +107,16 @@ class PostgresAdapter:
     def get_user_by_username(self, username: str):
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            cursor.execute(
+                """
+                SELECT u.*, p.party_name, a.alliance_name 
+                FROM users u 
+                LEFT JOIN parties p ON u.party_id = p.party_id 
+                LEFT JOIN alliances a ON u.alliance_id = a.alliance_id 
+                WHERE u.username = %s
+                """, 
+                (username,)
+            )
             row = cursor.fetchone()
 
             if row:
@@ -119,15 +135,15 @@ class PostgresAdapter:
             return None
 
     def create_user(self, user_data):
-        username, role, full_name, phone, assigned_booths, password_hash, email, created_by, assigned_constituencies = user_data
+        username, role, full_name, phone, assigned_booths, password_hash, email, created_by, assigned_constituencies, party_id, alliance_id = user_data
         
         with get_db_connection() as conn:
             cursor = conn.cursor()
             
             # Insert user
             cursor.execute(
-                "INSERT INTO users (username, role, full_name, phone, password_hash, email, created_by) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING user_id",
-                (username, role, full_name, phone, password_hash, email, created_by)
+                "INSERT INTO users (username, role, full_name, phone, password_hash, email, created_by, party_id, alliance_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING user_id",
+                (username, role, full_name, phone, password_hash, email, created_by, party_id, alliance_id)
             )
             user_id = cursor.fetchone()[0]
             
@@ -156,7 +172,7 @@ class PostgresAdapter:
                     )
             
             conn.commit()
-            return True
+            return self.get_user_by_id(user_id)
     
     def update_user(self, user_id, updates):
         with get_db_connection() as conn:
@@ -219,7 +235,16 @@ class PostgresAdapter:
     def get_user_by_id(self, user_id):
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
+            cursor.execute(
+                """
+                SELECT u.*, p.party_name, a.alliance_name 
+                FROM users u 
+                LEFT JOIN parties p ON u.party_id = p.party_id 
+                LEFT JOIN alliances a ON u.alliance_id = a.alliance_id 
+                WHERE u.user_id = %s
+                """, 
+                (user_id,)
+            )
             row = cursor.fetchone()
             
             if row:
@@ -359,7 +384,16 @@ class PostgresAdapter:
     def get_user_by_mobile(self, mobile: str):
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE phone = %s", (mobile,))
+            cursor.execute(
+                """
+                SELECT u.*, p.party_name, a.alliance_name 
+                FROM users u 
+                LEFT JOIN parties p ON u.party_id = p.party_id 
+                LEFT JOIN alliances a ON u.alliance_id = a.alliance_id 
+                WHERE u.phone = %s
+                """, 
+                (mobile,)
+            )
             row = cursor.fetchone()
             
             if row:
