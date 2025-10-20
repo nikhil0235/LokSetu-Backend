@@ -49,22 +49,18 @@ class BoothSummaryService:
 
     def _count_age_groups(self, voters: List[Dict]) -> Dict[str, int]:
         """Count voters by age groups"""
-        groups = {"18-25": 0, "26-35": 0, "36-50": 0, "51-65": 0, "65+": 0}
+        groups = {"18-35": 0, "36-55": 0, "56+": 0}
         for voter in voters:
             age = voter.get("age")
             if age:
                 try:
                     age = int(age)
-                    if 18 <= age <= 25:
-                        groups["18-25"] += 1
-                    elif 26 <= age <= 35:
-                        groups["26-35"] += 1
-                    elif 36 <= age <= 50:
-                        groups["36-50"] += 1
-                    elif 51 <= age <= 65:
-                        groups["51-65"] += 1
-                    elif age > 65:
-                        groups["65+"] += 1
+                    if 18 <= age <= 35:
+                        groups["18-35"] += 1
+                    elif 36 <= age <= 55:
+                        groups["36-55"] += 1
+                    elif age > 56:
+                        groups["56+"] += 1
                 except ValueError:
                     pass
         return groups
