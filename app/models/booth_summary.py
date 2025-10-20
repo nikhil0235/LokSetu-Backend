@@ -32,28 +32,42 @@ class BoothSummary:
         self.education_counts = education_counts or {}
         self.employment_counts = employment_counts or {}
         self.age_group_counts = age_group_counts or {}
-        self.scheme_beneficiaries_counts = scheme_beneficiaries_counts or ""
+        self.scheme_beneficiaries_counts = scheme_beneficiaries_counts or {}
         self.last_updated = last_updated or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     @classmethod
     def from_dict(cls, data: dict):
         import json
-        return cls(
+
+        def safe_json(value):
+            """Safely parse JSON or return {} if empty/invalid."""
+            if isinstance(value, dict):
+                return value
+            if not value or value == "null" or value == "":
+                return "{}"
+            try:
+                return json.loads(value)
+            except Exception as e:
+                print(f"⚠️  JSON parse error for value={value}: {e}")
+                return {}
+
+        instace = cls(
             booth_id=data.get("booth_id"),
             constituency_id=data.get("constituency_id"),
             total_voters=data.get("total_voters", 0),
             male_voters=data.get("male_voters", 0),
             female_voters=data.get("female_voters", 0),
             other_gender_voters=data.get("other_gender_voters", 0),
-            voting_preference_counts=data.get("voting_preference_counts", {}) if isinstance(data.get("voting_preference_counts"), dict) else json.loads(data.get("voting_preference_counts", "{}")),
-            religion_counts=data.get("religion_counts", {}) if isinstance(data.get("religion_counts"), dict) else json.loads(data.get("religion_counts", "{}")),
-            category_counts=data.get("category_counts", {}) if isinstance(data.get("category_counts"), dict) else json.loads(data.get("category_counts", "{}")),
-            education_counts=data.get("education_counts", {}) if isinstance(data.get("education_counts"), dict) else json.loads(data.get("education_counts", "{}")),
-            employment_counts=data.get("employment_counts", {}) if isinstance(data.get("employment_counts"), dict) else json.loads(data.get("employment_counts", "{}")),
-            age_group_counts=data.get("age_group_counts", {}) if isinstance(data.get("age_group_counts"), dict) else json.loads(data.get("age_group_counts", "{}")),
-            scheme_beneficiaries_counts=eval(data.get("scheme_beneficiaries_counts", "{}")) if isinstance(data.get("scheme_beneficiaries_counts"), str) else data.get("scheme_beneficiaries_counts", {}),
+            voting_preference_counts=safe_json(data.get("voting_preference_counts")),
+            religion_counts=safe_json(data.get("religion_counts")),
+            category_counts=safe_json(data.get("category_counts")),
+            education_counts=safe_json(data.get("education_counts")),
+            employment_counts=safe_json(data.get("employment_counts")),
+            age_group_counts=safe_json(data.get("age_group_counts")),
+            scheme_beneficiaries_counts=safe_json(data.get("scheme_beneficiaries_counts")),
             last_updated=str(data.get("last_updated")) if data.get("last_updated") else None
         )
+        return instace
 
     def to_dict(self):
         return {
