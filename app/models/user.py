@@ -11,7 +11,11 @@ class User:
         phone: str = "",
         email: str = None,
         created_by: str = None,
-        assigned_constituencies: List[str] = None
+        assigned_constituencies: List[str] = None,
+        party_id: int = None,
+        alliance_id: int = None,
+        party_name: str = None,
+        alliance_name: str = None
     ):
         self.user_id = user_id
         self.username = username
@@ -22,6 +26,10 @@ class User:
         self.email = email
         self.created_by = created_by
         self.assigned_constituencies = assigned_constituencies or []
+        self.party_id = party_id
+        self.alliance_id = alliance_id
+        self.party_name = party_name
+        self.alliance_name = alliance_name
 
     def can_access_booth(self, booth_id: Union[str, int]) -> bool:
         if self.role == "super_admin":

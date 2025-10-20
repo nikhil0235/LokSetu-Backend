@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import voters, users, auth, general, booth_summaries, schemes, parties
 from app.core.middleware import RoleAccessMiddleware
+from app.core.exceptions import global_exception_handler
 from app.data.connection import close_db_connections
 
 app = FastAPI(title="Voter Management System")
@@ -21,6 +22,9 @@ app.add_middleware(
 )
 
 app.add_middleware(RoleAccessMiddleware)
+
+# Add global exception handler
+app.add_exception_handler(Exception, global_exception_handler)
 
 # Register routes
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])

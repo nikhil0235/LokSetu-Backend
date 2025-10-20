@@ -75,11 +75,17 @@ CREATE TABLE users (
     full_name VARCHAR(200),
     phone VARCHAR(20),
     email VARCHAR(255),
+    party_id INTEGER REFERENCES parties(party_id),
+    alliance_id INTEGER REFERENCES alliances(alliance_id),
     created_by INTEGER REFERENCES users(user_id),
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT check_single_affiliation CHECK (
+        (party_id IS NOT NULL AND alliance_id IS NULL) OR 
+        (party_id IS NULL AND alliance_id IS NOT NULL) OR 
+        (party_id IS NULL AND alliance_id IS NULL)
+    )1`
 
 -- User constituency assignmentss
 CREATE TABLE user_constituencies (

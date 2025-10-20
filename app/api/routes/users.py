@@ -23,17 +23,20 @@ router = APIRouter()
 async def list_users(
     user: User = Depends(get_current_user)
 ):
-    service = UserService()
-    all_users = service.get_all_users()
-    user_booth_ids = set(user.get("assigned_booths", []))
-    filtered_users = []
-    for u in all_users:
-        print(u["role"])
-        booth_ids = set(u.get("assigned_constituencies", ""))
-        if (user_booth_ids & booth_ids) and ROLE_RANK[u.get("role")]-ROLE_RANK[user["role"]] == 1:
-            filtered_users.append(u)
-    
-    return filtered_users
+    try:
+        service = UserService()
+        all_users = service.get_all_users()
+        user_booth_ids = set(user.get("assigned_booths", []))
+        filtered_users = []
+        for u in all_users:
+            booth_ids = set(u.get("assigned_constituencies", ""))
+            if (user_booth_ids & booth_ids) and ROLE_RANK[u.get("role")]-ROLE_RANK[user["role"]] == 1:
+                filtered_users.append(u)
+        
+        return filtered_users
+    except Exception as e:
+        logger.error(f"Error listing users: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve users. Please try again later.")
 
 
 @router.post("/")
@@ -46,23 +49,49 @@ async def create_user(
     email: str = Form(""),
     assigned_booths: str = Form(""),
     assigned_constituencies: str = Form(""),
+    party_id: int = Form(None),
+    alliance_id: int = Form(None),
     user: User = Depends(get_current_user)
 ):
-    
-    if ROLE_RANK[user["role"]] > ROLE_RANK[role]:
-        raise HTTPException(status_code=403, detail="Cannot create user with higher role than current user")
+    try:
+        if ROLE_RANK[user["role"]] > ROLE_RANK[role]:
+            raise HTTPException(status_code=403, detail="Cannot create user with higher role than current user")
 
-    service = UserService()
-    
-    # Check if username exists
-    existing_user = service.get_user_by_username(username)
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Username already exists")
+        service = UserService()
+        
+        # Check if username exists
+        existing_user = service.get_user_by_username(username)
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Username already exists")
 
-    # Create user via service layer
-    service.create_user(username, role, full_name, phone, email, assigned_booths, assigned_constituencies, hash_password(password), user["user_id"])
-    
-    return {"message": f"User {username} created successfully with assigned booth ids {assigned_booths} with role {role}"}
+        # Validate party/alliance constraint
+        if party_id and alliance_id:
+            raise HTTPException(status_code=400, detail="User cannot belong to both party and alliance")
+        
+        # Create user via service layer
+        created_user = service.create_user(username, role, full_name, phone, email, assigned_booths, assigned_constituencies, hash_password(password), user["user_id"], party_id, alliance_id)
+        
+        return {
+            "message": f"User {username} created successfully with assigned booth ids {assigned_booths} with role {role}",
+            "user_id": created_user["user_id"],
+            "username": created_user["username"]
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_msg = str(e).lower()
+        logger.error(f"Error creating user {username}: {str(e)}")
+        
+        # Handle specific constraint violations
+        if "unique constraint" in error_msg or "duplicate key" in error_msg:
+            if "phone" in error_msg:
+                raise HTTPException(status_code=400, detail="This phone number is already registered with another user.")
+            elif "email" in error_msg:
+                raise HTTPException(status_code=400, detail="This email address is already registered with another user.")
+            elif "username" in error_msg:
+                raise HTTPException(status_code=400, detail="This username is already taken. Please choose a different one.")
+        
+        raise HTTPException(status_code=500, detail="Failed to create user. Please try again later.")
 
 
 @router.patch("/{userId}")
@@ -71,42 +100,58 @@ async def update_user(
     updates: dict = Body(...),
     user: User = Depends(get_current_user)
 ):
-    print(updates)
-    service = UserService()
-    
-    target_user = service.get_user_by_id(userId)
-    if not target_user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    current_role = target_user['role']
-    print(current_role)
-    print(user['role'])
-    if ROLE_RANK[user["role"]] > ROLE_RANK[current_role]:
-        raise HTTPException(status_code=403, detail="Only higher roles can update this user")
-    
-    # Map fields and hash password if needed
-    field_mapping = {
-        "username": "username",
-        "role": "role", 
-        "full_name": "full_name",
-        "phone": "phone",
-        "assigned_booths": "assigned_booths",
-        "assigned_constituencies": "assigned_constituencies",
-        "email": "email"
-    }
-    
-    db_updates = {}
-    for field, value in updates.items():
-        if field in field_mapping and value is not None:
-            db_field = field_mapping[field]
-            if field == "password":
-                value = hash_password(value)
-            db_updates[db_field] = value
-    
-    if db_updates:
-        service.update_user(userId, db_updates)
-    
-    return {"message": f"User {userId} updated", "success": True}
+    try:
+        service = UserService()
+        
+        target_user = service.get_user_by_id(userId)
+        if not target_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        current_role = target_user['role']
+        if ROLE_RANK[user["role"]] > ROLE_RANK[current_role]:
+            raise HTTPException(status_code=403, detail="Only higher roles can update this user")
+        
+        # Map fields and hash password if needed
+        field_mapping = {
+            "username": "username",
+            "role": "role", 
+            "full_name": "full_name",
+            "phone": "phone",
+            "assigned_booths": "assigned_booths",
+            "assigned_constituencies": "assigned_constituencies",
+            "email": "email",
+            "party_id": "party_id",
+            "alliance_id": "alliance_id"
+        }
+        
+        db_updates = {}
+        for field, value in updates.items():
+            if field in field_mapping and value is not None:
+                db_field = field_mapping[field]
+                if field == "password":
+                    value = hash_password(value)
+                db_updates[db_field] = value
+        
+        if db_updates:
+            service.update_user(userId, db_updates)
+        
+        return {"message": f"User {userId} updated", "success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_msg = str(e).lower()
+        logger.error(f"Error updating user {userId}: {str(e)}")
+        
+        # Handle specific constraint violations
+        if "unique constraint" in error_msg or "duplicate key" in error_msg:
+            if "phone" in error_msg:
+                raise HTTPException(status_code=400, detail="This phone number is already registered with another user.")
+            elif "email" in error_msg:
+                raise HTTPException(status_code=400, detail="This email address is already registered with another user.")
+            elif "username" in error_msg:
+                raise HTTPException(status_code=400, detail="This username is already taken. Please choose a different one.")
+        
+        raise HTTPException(status_code=500, detail="Failed to update user. Please try again later.")
 
 
 @router.delete("/{userId}")
