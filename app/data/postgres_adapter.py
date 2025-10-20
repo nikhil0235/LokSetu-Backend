@@ -374,6 +374,155 @@ class PostgresAdapter:
                 
                 return user
             return None
+    
+    # Party methods
+    def get_parties(self, is_active=None):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            query = "SELECT * FROM parties WHERE 1=1"
+            params = []
+            
+            if is_active is not None:
+                query += " AND is_active = %s"
+                params.append(is_active)
+            
+            query += " ORDER BY party_name"
+            cursor.execute(query, params)
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
+    
+    def get_party_by_id(self, party_id):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM parties WHERE party_id = %s", (party_id,))
+            row = cursor.fetchone()
+            if row:
+                columns = [desc[0] for desc in cursor.description]
+                return dict(zip(columns, row))
+            return None
+    
+    def create_party(self, party_data):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO parties (party_name, party_code, party_symbol, party_type, founded_year, is_active) VALUES (%s, %s, %s, %s, %s, %s) RETURNING party_id",
+                (party_data['party_name'], party_data.get('party_code'), party_data.get('party_symbol'), 
+                 party_data.get('party_type'), party_data.get('founded_year'), party_data.get('is_active', True))
+            )
+            party_id = cursor.fetchone()[0]
+            conn.commit()
+            return self.get_party_by_id(party_id)
+    
+    def update_party(self, party_id, updates):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            set_clauses = []
+            values = []
+            
+            for field, value in updates.items():
+                set_clauses.append(f"{field} = %s")
+                values.append(value)
+            
+            values.append(party_id)
+            cursor.execute(f"UPDATE parties SET {', '.join(set_clauses)} WHERE party_id = %s", values)
+            conn.commit()
+            return self.get_party_by_id(party_id)
+    
+    def delete_party(self, party_id):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            # First delete party alliance mappings
+            cursor.execute("DELETE FROM party_alliances WHERE party_id = %s", (party_id,))
+            # Then delete the party
+            cursor.execute("DELETE FROM parties WHERE party_id = %s", (party_id,))
+            conn.commit()
+            return True
+    
+    # Alliance methods
+    def get_alliances(self, is_active=None):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            query = "SELECT * FROM alliances WHERE 1=1"
+            params = []
+            
+            if is_active is not None:
+                query += " AND is_active = %s"
+                params.append(is_active)
+            
+            query += " ORDER BY alliance_name"
+            cursor.execute(query, params)
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
+    
+    def get_alliance_by_id(self, alliance_id):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM alliances WHERE alliance_id = %s", (alliance_id,))
+            row = cursor.fetchone()
+            if row:
+                columns = [desc[0] for desc in cursor.description]
+                alliance = dict(zip(columns, row))
+                
+                # Get alliance parties
+                cursor.execute(
+                    "SELECT p.* FROM parties p JOIN party_alliances pa ON p.party_id = pa.party_id WHERE pa.alliance_id = %s AND pa.is_current = true",
+                    (alliance_id,)
+                )
+                party_columns = [desc[0] for desc in cursor.description]
+                party_rows = cursor.fetchall()
+                alliance['parties'] = [dict(zip(party_columns, row)) for row in party_rows]
+                
+                return alliance
+            return None
+    
+    def create_alliance(self, alliance_data):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO alliances (alliance_name, alliance_code, description, formed_date, is_active) VALUES (%s, %s, %s, %s, %s) RETURNING alliance_id",
+                (alliance_data['alliance_name'], alliance_data.get('alliance_code'), alliance_data.get('description'),
+                 alliance_data.get('formed_date'), alliance_data.get('is_active', True))
+            )
+            alliance_id = cursor.fetchone()[0]
+            conn.commit()
+            return self.get_alliance_by_id(alliance_id)
+    
+    def update_alliance(self, alliance_id, updates):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            set_clauses = []
+            values = []
+            
+            for field, value in updates.items():
+                set_clauses.append(f"{field} = %s")
+                values.append(value)
+            
+            values.append(alliance_id)
+            cursor.execute(f"UPDATE alliances SET {', '.join(set_clauses)} WHERE alliance_id = %s", values)
+            conn.commit()
+            return self.get_alliance_by_id(alliance_id)
+    
+    def delete_alliance(self, alliance_id):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            # First delete party alliance mappings
+            cursor.execute("DELETE FROM party_alliances WHERE alliance_id = %s", (alliance_id,))
+            # Then delete the alliance
+            cursor.execute("DELETE FROM alliances WHERE alliance_id = %s", (alliance_id,))
+            conn.commit()
+            return True
+    
+    def map_party_to_alliance(self, party_id, alliance_id, joined_date=None, is_current=True):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO party_alliances (party_id, alliance_id, joined_date, is_current) VALUES (%s, %s, %s, %s) ON CONFLICT (party_id, alliance_id) DO UPDATE SET joined_date = EXCLUDED.joined_date, is_current = EXCLUDED.is_current",
+                (party_id, alliance_id, joined_date, is_current)
+            )
+            conn.commit()
+            return True
 
     def _log_update(self, epic_id, user_id, old_values, new_values, cursor):
         cursor.execute(

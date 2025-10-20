@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import voters, users, auth, general, booth_summaries, schemes
+from app.api.routes import voters, users, auth, general, booth_summaries, schemes, parties
 from app.core.middleware import RoleAccessMiddleware
 from app.data.connection import close_db_connections
 
@@ -29,6 +29,7 @@ app.include_router(users.router, prefix="/users", tags=["Users"])
 app.include_router(general.router, prefix="/general", tags=["General"])
 app.include_router(booth_summaries.router, prefix="/booth-summaries", tags=["Booth Summaries"])
 app.include_router(schemes.router, prefix="/schemes", tags=["Schemes"])
+app.include_router(parties.router, prefix="/parties", tags=["Parties"])
 
 @app.get("/")
 def root():
