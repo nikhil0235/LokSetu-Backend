@@ -125,14 +125,14 @@ class BoothSummaryService:
             params = []
             
             if booth_ids:
-                placeholders = ','.join(['%s'] * len(booth_ids))
-                query += f" AND booth_id IN ({placeholders})"
-                params.extend(booth_ids)
+                query += " AND booth_id = ANY(%s)"
+                params.append(booth_ids)
             
             cursor.execute(query, params)
             columns = [desc[0] for desc in cursor.description]
-            rows = cursor.fetchall()
             
+            rows = cursor.fetchall()
+           
             summaries = []
             for row in rows:
                 data = dict(zip(columns, row))
