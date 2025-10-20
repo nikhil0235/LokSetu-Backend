@@ -31,10 +31,12 @@ class BoothSummaryService:
         # Aggregation counts
         summary.voting_preference_counts = self._count_field(voters, "voting_preference")
         summary.religion_counts = self._count_field(voters, "religion")
-        summary.category_counts = self._count_field(voters, "category")
+        summary.category_counts = self._count_nested_field(voters, "category", "caste")
         summary.education_counts = self._count_field(voters, "education_level")
         summary.employment_counts = self._count_field(voters, "employment_status")
         summary.age_group_counts = self._count_age_groups(voters)
+        summary.complete_voter_count = self._count_complete_voters(voters)
+        summary.verified_voter_count = self._count_verified_voters(voters)
 
         return summary
 
@@ -46,6 +48,31 @@ class BoothSummaryService:
             if value:
                 counts[str(value)] += 1
         return dict(counts)
+
+    def _count_nested_field(self, voters: List[Dict], main_field: str, sub_field: str) -> Dict[str, Dict]:
+        """Count occurrences with nested structure: main_field -> sub_field breakdown"""
+        nested_counts = defaultdict(lambda: {"total": 0, "breakdown": defaultdict(int)})
+        
+        for voter in voters:
+            main_value = voter.get(main_field)
+            sub_value = voter.get(sub_field)
+            
+            if main_value:
+                main_key = str(main_value)
+                nested_counts[main_key]["total"] += 1
+                
+                if sub_value:
+                    nested_counts[main_key]["breakdown"][str(sub_value)] += 1
+        
+        # Convert defaultdict to regular dict
+        result = {}
+        for main_key, data in nested_counts.items():
+            result[main_key] = {
+                "total": data["total"],
+                "breakdown": dict(data["breakdown"])
+            }
+        
+        return result
 
     def _count_age_groups(self, voters: List[Dict]) -> Dict[str, int]:
         """Count voters by age groups"""
@@ -65,6 +92,23 @@ class BoothSummaryService:
                     pass
         return groups
 
+    def _count_complete_voters(self, voters: List[Dict]) -> int:
+        """Count voters with caste, category, phone, education"""
+        count = 0
+        for voter in voters:
+            if (voter.get("caste") and voter.get("category") and 
+                voter.get("mobile") and voter.get("education_level")):
+                count += 1
+        return count
+
+    def _count_verified_voters(self, voters: List[Dict]) -> int:
+        """Count voters with phone and voting_preference"""
+        count = 0
+        for voter in voters:
+            if voter.get("mobile") and voter.get("voting_preference"):
+                count += 1
+        return count
+
     def update_booth_summary(self, booth_id: int):
         """Update summary for a specific booth"""
         summary = self.calculate_booth_summary(booth_id)
@@ -81,8 +125,9 @@ class BoothSummaryService:
                 INSERT INTO booth_summaries (
                     booth_id, constituency_id, total_voters, male_voters, female_voters, 
                     other_gender_voters, voting_preference_counts, religion_counts, 
-                    category_counts, education_counts, employment_counts, age_group_counts, scheme_beneficiaries_counts
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    category_counts, education_counts, employment_counts, age_group_counts, 
+                    complete_voter_count, verified_voter_count, scheme_beneficiaries_counts
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (booth_id) DO UPDATE SET
                     constituency_id = EXCLUDED.constituency_id,
                     total_voters = EXCLUDED.total_voters,
@@ -95,6 +140,8 @@ class BoothSummaryService:
                     education_counts = EXCLUDED.education_counts,
                     employment_counts = EXCLUDED.employment_counts,
                     age_group_counts = EXCLUDED.age_group_counts,
+                    complete_voter_count = EXCLUDED.complete_voter_count,
+                    verified_voter_count = EXCLUDED.verified_voter_count,
                     scheme_beneficiaries_counts = EXCLUDED.scheme_beneficiaries_counts,
                     last_updated = CURRENT_TIMESTAMP
                 """,
@@ -107,6 +154,8 @@ class BoothSummaryService:
                     json.dumps(summary.education_counts),
                     json.dumps(summary.employment_counts),
                     json.dumps(summary.age_group_counts),
+                    summary.complete_voter_count,
+                    summary.verified_voter_count,
                     json.dumps(summary.scheme_beneficiaries_counts)
                 )
             )
