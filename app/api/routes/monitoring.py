@@ -43,3 +43,15 @@ async def get_system_health():
         "status": "healthy",
         "timestamp": "2024-01-01T00:00:00Z"
     }
+
+@router.post("/cleanup")
+async def manual_cleanup(
+    user: User = Depends(get_current_user)
+):
+    """Manually trigger cleanup of old data"""
+    if user['role'] != 'super_admin':
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    from app.services.cleanup_scheduler import cleanup_scheduler
+    result = cleanup_scheduler.run_manual_cleanup()
+    return result

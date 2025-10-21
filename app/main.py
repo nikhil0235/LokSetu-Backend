@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import voters, users, auth, general, booth_summaries, schemes, parties, monitoring
+from app.api.routes import voters, users, auth, general, booth_summaries, schemes, parties, monitoring, locations
 from app.core.middleware import RoleAccessMiddleware
 from app.core.monitoring_middleware import APIMonitoringMiddleware
 from app.core.exceptions import global_exception_handler
@@ -37,11 +37,19 @@ app.include_router(booth_summaries.router, prefix="/booth-summaries", tags=["Boo
 app.include_router(schemes.router, prefix="/schemes", tags=["Schemes"])
 app.include_router(parties.router, prefix="/parties", tags=["Parties"])
 app.include_router(monitoring.router, prefix="/monitoring", tags=["Monitoring"])
+app.include_router(locations.router, prefix="/locations", tags=["Locations"])
 
 @app.get("/")
 def root():
     return {"message": "Voter Management Backend is running"}
 
+@app.on_event("startup")
+async def startup_event():
+    from app.services.cleanup_scheduler import cleanup_scheduler
+    cleanup_scheduler.start()
+
 @app.on_event("shutdown")
 async def shutdown_event():
+    from app.services.cleanup_scheduler import cleanup_scheduler
+    cleanup_scheduler.stop()
     close_db_connections()

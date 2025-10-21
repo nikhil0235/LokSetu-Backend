@@ -376,6 +376,16 @@ CREATE TABLE api_logs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- User location tracking (24 hour history)
+CREATE TABLE user_locations (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
+    latitude DECIMAL(10, 8) NOT NULL,
+    longitude DECIMAL(11, 8) NOT NULL,
+    accuracy FLOAT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- =============================================
 -- INDEXES FOR PERFORMANCE
 -- =============================================
@@ -413,6 +423,10 @@ CREATE INDEX idx_api_logs_endpoint ON api_logs(endpoint);
 CREATE INDEX idx_api_logs_status_code ON api_logs(status_code);
 CREATE INDEX idx_api_logs_user_id ON api_logs(user_id);
 CREATE INDEX idx_api_logs_created_at ON api_logs(created_at);
+
+-- User locations indexes
+CREATE INDEX idx_user_locations_user_time ON user_locations(user_id, created_at DESC);
+CREATE INDEX idx_user_locations_created_at ON user_locations(created_at);
 
 -- User access indexes
 CREATE INDEX idx_user_booths_user_id ON user_booths(user_id);
