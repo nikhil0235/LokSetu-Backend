@@ -24,13 +24,13 @@ class Scheme:
     @classmethod
     def from_dict(cls, data: dict):
         return cls(
-            scheme_id=data.get("SchemeID"),
-            name=data.get("Name", ""),
-            description=data.get("Description"),
-            category=data.get("Category", "Other"),
-            created_by=data.get("CreatedBy"),
-            created_at=data.get("CreatedAt"),
-            updated_at=data.get("UpdatedAt")
+            scheme_id=data.get("scheme_id") or data.get("SchemeID"),
+            name=data.get("name") or data.get("Name", ""),
+            description=data.get("description") or data.get("Description"),
+            category=data.get("category") or data.get("Category", "Other"),
+            created_by=data.get("created_by") or data.get("CreatedBy"),
+            created_at=str(data.get("created_at") or data.get("CreatedAt", "")),
+            updated_at=str(data.get("updated_at") or data.get("UpdatedAt", ""))
         )
 
     def to_dict(self):

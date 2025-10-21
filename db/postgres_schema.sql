@@ -428,6 +428,16 @@ CREATE INDEX idx_api_logs_created_at ON api_logs(created_at);
 CREATE INDEX idx_user_locations_user_time ON user_locations(user_id, created_at DESC);
 CREATE INDEX idx_user_locations_created_at ON user_locations(created_at);
 
+-- Scheme indexes
+CREATE INDEX idx_schemes_name ON schemes(name);
+CREATE INDEX idx_schemes_category ON schemes(category);
+CREATE INDEX idx_schemes_created_by ON schemes(created_by);
+
+-- Voter-scheme relationship indexes
+CREATE INDEX idx_voter_schemes_voter_id ON voter_schemes(voter_epic_id);
+CREATE INDEX idx_voter_schemes_scheme_id ON voter_schemes(scheme_id);
+CREATE INDEX idx_voter_schemes_assigned_by ON voter_schemes(assigned_by);
+
 -- User access indexes
 CREATE INDEX idx_user_booths_user_id ON user_booths(user_id);
 CREATE INDEX idx_user_constituencies_user_id ON user_constituencies(user_id);

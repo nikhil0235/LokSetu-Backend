@@ -106,3 +106,39 @@ async def update_voter_schemes(
         )
     
     return {"message": "Voter schemes updated successfully"}
+
+@router.get("/beneficiaries/{scheme_id}")
+async def get_scheme_beneficiaries(
+    scheme_id: int,
+    current_user: User = Depends(get_current_user)
+):
+    """Get voters assigned to a scheme (Admin only)"""
+    scheme_service = SchemeService()
+    
+    if not scheme_service.get_scheme_by_id(scheme_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Scheme not found"
+        )
+    
+    beneficiaries = scheme_service.get_scheme_beneficiaries(scheme_id)
+    return {
+        "scheme_id": scheme_id,
+        "beneficiaries": beneficiaries,
+        "total_count": len(beneficiaries)
+    }
+
+@router.get("/voter/{voter_epic}")
+async def get_voter_schemes(
+    voter_epic: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get schemes assigned to a voter (Admin only)"""
+    scheme_service = SchemeService()
+    
+    schemes = scheme_service.get_voter_schemes(voter_epic)
+    return {
+        "voter_epic": voter_epic,
+        "schemes": schemes,
+        "total_count": len(schemes)
+    }
