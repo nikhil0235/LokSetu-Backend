@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import voters, users, auth, general, booth_summaries, schemes, parties
+from app.api.routes import voters, users, auth, general, booth_summaries, schemes, parties, monitoring
 from app.core.middleware import RoleAccessMiddleware
+from app.core.monitoring_middleware import APIMonitoringMiddleware
 from app.core.exceptions import global_exception_handler
 from app.data.connection import close_db_connections
 
@@ -21,6 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(APIMonitoringMiddleware)
 app.add_middleware(RoleAccessMiddleware)
 
 # Add global exception handler
@@ -34,6 +36,7 @@ app.include_router(general.router, prefix="/general", tags=["General"])
 app.include_router(booth_summaries.router, prefix="/booth-summaries", tags=["Booth Summaries"])
 app.include_router(schemes.router, prefix="/schemes", tags=["Schemes"])
 app.include_router(parties.router, prefix="/parties", tags=["Parties"])
+app.include_router(monitoring.router, prefix="/monitoring", tags=["Monitoring"])
 
 @app.get("/")
 def root():

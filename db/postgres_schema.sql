@@ -357,8 +357,23 @@ CREATE TABLE booth_summaries (
     education_counts JSONB,
     employment_counts JSONB,
     age_group_counts JSONB,
+    complete_voter_count INTEGER DEFAULT 0,
+    verified_voter_count INTEGER DEFAULT 0,
     scheme_beneficiaries_counts JSONB,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- API monitoring logs
+CREATE TABLE api_logs (
+    id SERIAL PRIMARY KEY,
+    endpoint VARCHAR(500) NOT NULL,
+    method VARCHAR(10) NOT NULL,
+    status_code INTEGER NOT NULL,
+    response_time_ms INTEGER NOT NULL,
+    user_id INTEGER REFERENCES users(user_id),
+    ip_address INET,
+    user_agent TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- =============================================
@@ -392,6 +407,12 @@ CREATE INDEX idx_voters_migrated ON voters(migrated);
 CREATE INDEX idx_voter_updates_epic_id ON voter_updates(voter_epic_id);
 CREATE INDEX idx_voter_updates_user_id ON voter_updates(user_id);
 CREATE INDEX idx_voter_updates_created_at ON voter_updates(created_at);
+
+-- API logs indexes
+CREATE INDEX idx_api_logs_endpoint ON api_logs(endpoint);
+CREATE INDEX idx_api_logs_status_code ON api_logs(status_code);
+CREATE INDEX idx_api_logs_user_id ON api_logs(user_id);
+CREATE INDEX idx_api_logs_created_at ON api_logs(created_at);
 
 -- User access indexes
 CREATE INDEX idx_user_booths_user_id ON user_booths(user_id);
