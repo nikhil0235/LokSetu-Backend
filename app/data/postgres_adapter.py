@@ -11,7 +11,7 @@ class PostgresAdapter:
         'relation', 'guardian_fname', 'guardian_lname', 'guardian_fname_hin', 'guardian_lname_hin',
         'house_no', 'street', 'area', 'landmark', 'village_ward', 'pin_code', 'post_office',
         'gender', 'dob', 'age', 'mobile', 'email_id', 'family_contact_number', 'family_contact_person',
-        'last_voted_party', 'voting_preference', 'certainty_of_vote', 'vote_type', 'availability',
+        'last_voted_party', 'voted_party', 'voting_preference', 'certainty_of_vote', 'vote_type', 'availability',
         'first_time_voter', 'religion', 'category', 'obc_subtype', 'caste', 'caste_other',
         'language_pref', 'language_other', 'communication_language', 'education_level',
         'employment_status', 'govt_job_type', 'govt_job_group', 'job_role', 'monthly_salary_range',

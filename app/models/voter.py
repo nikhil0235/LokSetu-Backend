@@ -22,6 +22,7 @@ class Voter:
         mobile: Optional[str] = None,
         email_id: Optional[str] = None,
         last_voted_party: Optional[str] = None,
+        voted_party: Optional[str] = None,
         voting_preference: Optional[str] = None,
         certainty_of_vote: Optional[bool] = None,
         vote_type: Optional[str] = None,
@@ -128,6 +129,7 @@ class Voter:
         self.mobile = mobile
         self.email_id = email_id
         self.last_voted_party = last_voted_party
+        self.voted_party = voted_party
         self.voting_preference = voting_preference
         self.certainty_of_vote = certainty_of_vote
         self.vote_type = vote_type
@@ -242,6 +244,7 @@ class Voter:
             mobile=data.get("mobile"),
             email_id=data.get("email_id"),
             last_voted_party=data.get("last_voted_party"),
+            voted_party=data.get("voted_party"),
             voting_preference=data.get("voting_preference"),
             certainty_of_vote=data.get("certainty_of_vote"),
             vote_type=data.get("vote_type"),
@@ -355,6 +358,7 @@ class Voter:
             "mobile": self.mobile,
             "email_id": self.email_id,
             "last_voted_party": self.last_voted_party,
+            "voted_party": self.voted_party,
             "voting_preference": self.voting_preference,
             "certainty_of_vote": self.certainty_of_vote,
             "vote_type": self.vote_type,

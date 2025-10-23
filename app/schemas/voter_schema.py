@@ -27,6 +27,7 @@ class VoterBase(BaseModel):
     email_id: Optional[str]
 
     last_voted_party: Optional[str]
+    voted_party: Optional[str]
     voting_preference: Optional[str]
     certainty_of_vote: Optional[bool]
     vote_type: Optional[str]
@@ -147,6 +148,7 @@ class VoterUpdate(BaseModel):
     mobile: Optional[Any] = None
     email_id: Optional[str] = None
     last_voted_party: Optional[str] = None
+    voted_party: Optional[str] = None
     voting_preference: Optional[str] = None
     certainty_of_vote: Optional[bool] = None
     vote_type: Optional[str] = None

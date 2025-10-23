@@ -30,6 +30,7 @@ class BoothSummaryService:
 
         # Aggregation counts
         summary.voting_preference_counts = self._count_field(voters, "voting_preference")
+        summary.voted_party_counts = self._count_field(voters, "voted_party")
         summary.religion_counts = self._count_field(voters, "religion")
         summary.category_counts = self._count_nested_field(voters, "category", "caste")
         summary.education_counts = self._count_field(voters, "education_level")
@@ -124,10 +125,10 @@ class BoothSummaryService:
                 """
                 INSERT INTO booth_summaries (
                     booth_id, constituency_id, total_voters, male_voters, female_voters, 
-                    other_gender_voters, voting_preference_counts, religion_counts, 
+                    other_gender_voters, voting_preference_counts, voted_party_counts, religion_counts, 
                     category_counts, education_counts, employment_counts, age_group_counts, 
                     complete_voter_count, verified_voter_count, scheme_beneficiaries_counts
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (booth_id) DO UPDATE SET
                     constituency_id = EXCLUDED.constituency_id,
                     total_voters = EXCLUDED.total_voters,
@@ -135,6 +136,7 @@ class BoothSummaryService:
                     female_voters = EXCLUDED.female_voters,
                     other_gender_voters = EXCLUDED.other_gender_voters,
                     voting_preference_counts = EXCLUDED.voting_preference_counts,
+                    voted_party_counts = EXCLUDED.voted_party_counts,
                     religion_counts = EXCLUDED.religion_counts,
                     category_counts = EXCLUDED.category_counts,
                     education_counts = EXCLUDED.education_counts,
@@ -149,6 +151,7 @@ class BoothSummaryService:
                     summary.booth_id, summary.constituency_id, summary.total_voters,
                     summary.male_voters, summary.female_voters, summary.other_gender_voters,
                     json.dumps(summary.voting_preference_counts),
+                    json.dumps(summary.voted_party_counts),
                     json.dumps(summary.religion_counts),
                     json.dumps(summary.category_counts),
                     json.dumps(summary.education_counts),

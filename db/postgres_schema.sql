@@ -203,6 +203,7 @@ CREATE TABLE voters (
     
     -- Political preferences
     last_voted_party VARCHAR(100),
+    voted_party VARCHAR(100),
     voting_preference VARCHAR(100),
     certainty_of_vote BOOLEAN,
     vote_type VARCHAR(50),
@@ -352,6 +353,7 @@ CREATE TABLE booth_summaries (
     female_voters INTEGER DEFAULT 0,
     other_gender_voters INTEGER DEFAULT 0,
     voting_preference_counts JSONB,
+    voted_party_counts JSONB,
     religion_counts JSONB,
     category_counts JSONB,
     education_counts JSONB,
@@ -401,6 +403,7 @@ CREATE INDEX idx_voters_gender ON voters(gender);
 -- Political preference indexes
 CREATE INDEX idx_voters_voting_preference ON voters(voting_preference);
 CREATE INDEX idx_voters_last_voted_party ON voters(last_voted_party);
+CREATE INDEX idx_voters_voted_party ON voters(voted_party);
 CREATE INDEX idx_voters_certainty_of_vote ON voters(certainty_of_vote);
 
 -- Demographic indexes
