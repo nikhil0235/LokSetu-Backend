@@ -11,6 +11,7 @@ class BoothSummary:
         female_voters: int = 0,
         other_gender_voters: int = 0,
         voting_preference_counts: Dict[str, int] = None,
+        voted_party_counts: Dict[str, int] = None,
         religion_counts: Dict[str, int] = None,
         category_counts: Dict[str, Any] = None,
         education_counts: Dict[str, int] = None,
@@ -29,6 +30,7 @@ class BoothSummary:
         self.female_voters = female_voters
         self.other_gender_voters = other_gender_voters
         self.voting_preference_counts = voting_preference_counts or {}
+        self.voted_party_counts = voted_party_counts or {}
         self.religion_counts = religion_counts or {}
         self.category_counts = category_counts or {}
         self.education_counts = education_counts or {}
@@ -63,6 +65,7 @@ class BoothSummary:
             female_voters=data.get("female_voters", 0),
             other_gender_voters=data.get("other_gender_voters", 0),
             voting_preference_counts=safe_json(data.get("voting_preference_counts")),
+            voted_party_counts=safe_json(data.get("voted_party_counts")),
             religion_counts=safe_json(data.get("religion_counts")),
             category_counts=safe_json(data.get("category_counts")),
             education_counts=safe_json(data.get("education_counts")),
@@ -84,6 +87,7 @@ class BoothSummary:
             "female_voters": self.female_voters,
             "other_gender_voters": self.other_gender_voters,
             "voting_preference_counts": self.voting_preference_counts,
+            "voted_party_counts": self.voted_party_counts,
             "religion_counts": self.religion_counts,
             "category_counts": self.category_counts,
             "education_counts": self.education_counts,
@@ -104,6 +108,7 @@ class BoothSummary:
             "female_voters": self.female_voters,
             "other_gender_voters": self.other_gender_voters,
             "voting_preference_counts": self.voting_preference_counts,
+            "voted_party_counts": self.voted_party_counts,
             "religion_counts": self.religion_counts,
             "category_counts": self.category_counts,
             "education_counts": self.education_counts,
