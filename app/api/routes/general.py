@@ -47,3 +47,18 @@ async def list_booths(
     panchayat_id: Optional[int] = Query(None, description="Panchayat ID to get booths for")
 ):
     return adapter.get_booths(constituency_id, panchayat_id)
+
+@router.get("/booths-by-blocks", response_model=List[dict])
+async def list_booths_by_blocks(
+    block_ids: str = Query(..., description="Comma-separated block IDs (e.g., '1,2,3')")
+):
+    """Get all booths falling under the specified blocks"""
+    try:
+        # Parse block IDs
+        block_id_list = [int(bid.strip()) for bid in block_ids.split(',') if bid.strip()]
+        if not block_id_list:
+            raise HTTPException(status_code=400, detail="Invalid block_ids parameter")
+        
+        return adapter.get_booths_by_blocks(block_id_list)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid block_ids format. Use comma-separated integers.")

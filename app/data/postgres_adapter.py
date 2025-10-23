@@ -382,6 +382,27 @@ class PostgresAdapter:
             columns = [desc[0] for desc in cursor.description]
             rows = cursor.fetchall()
             return [dict(zip(columns, row)) for row in rows]
+    
+    def get_booths_by_blocks(self, block_ids):
+        """Get all booths falling under the specified blocks"""
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            placeholders = ','.join(['%s'] * len(block_ids))
+            cursor.execute(
+                f"""
+                SELECT b.*, p.panchayat_name, bl.block_name, c.constituency_name
+                FROM booths b
+                JOIN panchayats p ON b.panchayat_id = p.panchayat_id
+                JOIN blocks bl ON p.block_id = bl.block_id
+                JOIN constituencies c ON b.constituency_id = c.constituency_id
+                WHERE bl.block_id IN ({placeholders})
+                ORDER BY bl.block_name, p.panchayat_name, b.booth_number
+                """,
+                block_ids
+            )
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
 
     def store_otp(self, mobile: str, otp: str, expires_at: datetime):
         with get_db_connection() as conn:
@@ -582,6 +603,117 @@ class PostgresAdapter:
             )
             conn.commit()
             return True
+
+    # Scheme methods
+    def get_schemes(self):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM schemes ORDER BY name")
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
+    
+    def get_scheme_by_id(self, scheme_id):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM schemes WHERE scheme_id = %s", (scheme_id,))
+            row = cursor.fetchone()
+            if row:
+                columns = [desc[0] for desc in cursor.description]
+                return dict(zip(columns, row))
+            return None
+    
+    def create_scheme(self, scheme_data):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO schemes (name, description, category, created_by) VALUES (%s, %s, %s, %s) RETURNING scheme_id",
+                (scheme_data['name'], scheme_data.get('description'), scheme_data['category'], scheme_data['created_by'])
+            )
+            scheme_id = cursor.fetchone()[0]
+            conn.commit()
+            return self.get_scheme_by_id(scheme_id)
+    
+    def update_scheme(self, scheme_id, updates):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            set_clauses = []
+            values = []
+            
+            for field, value in updates.items():
+                set_clauses.append(f"{field} = %s")
+                values.append(value)
+            
+            set_clauses.append("updated_at = CURRENT_TIMESTAMP")
+            values.append(scheme_id)
+            
+            cursor.execute(f"UPDATE schemes SET {', '.join(set_clauses)} WHERE scheme_id = %s", values)
+            conn.commit()
+            return self.get_scheme_by_id(scheme_id)
+    
+    def delete_scheme(self, scheme_id):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            # Delete scheme (voter_schemes will be deleted automatically due to CASCADE)
+            cursor.execute("DELETE FROM schemes WHERE scheme_id = %s", (scheme_id,))
+            deleted_count = cursor.rowcount
+            conn.commit()
+            return deleted_count > 0
+    
+    def get_voter_schemes(self, voter_epic_id):
+        """Get schemes assigned to a voter"""
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT s.*, vs.assigned_at, vs.assigned_by 
+                FROM schemes s 
+                JOIN voter_schemes vs ON s.scheme_id = vs.scheme_id 
+                WHERE vs.voter_epic_id = %s
+                ORDER BY s.name
+                """,
+                (voter_epic_id,)
+            )
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
+    
+    def update_voter_schemes(self, voter_epic_id, scheme_ids, assigned_by):
+        """Update voter's scheme assignments"""
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Remove existing assignments
+            cursor.execute("DELETE FROM voter_schemes WHERE voter_epic_id = %s", (voter_epic_id,))
+            
+            # Add new assignments
+            if scheme_ids:
+                for scheme_id in scheme_ids:
+                    cursor.execute(
+                        "INSERT INTO voter_schemes (voter_epic_id, scheme_id, assigned_by) VALUES (%s, %s, %s)",
+                        (voter_epic_id, scheme_id, assigned_by)
+                    )
+            
+            conn.commit()
+            return True
+    
+    def get_scheme_beneficiaries(self, scheme_id):
+        """Get voters assigned to a scheme"""
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT v.epic_id, v.voter_fname, v.voter_lname, vs.assigned_at, vs.assigned_by
+                FROM voters v 
+                JOIN voter_schemes vs ON v.epic_id = vs.voter_epic_id 
+                WHERE vs.scheme_id = %s
+                ORDER BY v.voter_fname, v.voter_lname
+                """,
+                (scheme_id,)
+            )
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
 
     def bulk_update_voters_by_field(self, field, updates, user_id, batch_size=1000):
         """Bulk update voters by field with batching for performance"""
