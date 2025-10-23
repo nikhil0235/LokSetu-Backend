@@ -382,6 +382,27 @@ class PostgresAdapter:
             columns = [desc[0] for desc in cursor.description]
             rows = cursor.fetchall()
             return [dict(zip(columns, row)) for row in rows]
+    
+    def get_booths_by_blocks(self, block_ids):
+        """Get all booths falling under the specified blocks"""
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            placeholders = ','.join(['%s'] * len(block_ids))
+            cursor.execute(
+                f"""
+                SELECT b.*, p.panchayat_name, bl.block_name, c.constituency_name
+                FROM booths b
+                JOIN panchayats p ON b.panchayat_id = p.panchayat_id
+                JOIN blocks bl ON p.block_id = bl.block_id
+                JOIN constituencies c ON b.constituency_id = c.constituency_id
+                WHERE bl.block_id IN ({placeholders})
+                ORDER BY bl.block_name, p.panchayat_name, b.booth_number
+                """,
+                block_ids
+            )
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
 
     def store_otp(self, mobile: str, otp: str, expires_at: datetime):
         with get_db_connection() as conn:
