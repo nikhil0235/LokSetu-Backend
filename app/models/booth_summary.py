@@ -29,16 +29,16 @@ class BoothSummary:
         self.male_voters = male_voters
         self.female_voters = female_voters
         self.other_gender_voters = other_gender_voters
-        self.voting_preference_counts = voting_preference_counts or "{}"
-        self.voted_party_counts = voted_party_counts or "{}"
-        self.religion_counts = religion_counts or "{}"
-        self.category_counts = category_counts or "{}"
-        self.education_counts = education_counts or "{}"
-        self.employment_counts = employment_counts or "{}"
-        self.age_group_counts = age_group_counts or "{}"
+        self.voting_preference_counts = voting_preference_counts or {}
+        self.voted_party_counts = voted_party_counts or {}
+        self.religion_counts = religion_counts or {}
+        self.category_counts = category_counts or {}
+        self.education_counts = education_counts or {}
+        self.employment_counts = employment_counts or {}
+        self.age_group_counts = age_group_counts or {}
         self.complete_voter_count = complete_voter_count
         self.verified_voter_count = verified_voter_count
-        self.scheme_beneficiaries_counts = scheme_beneficiaries_counts or "{}"
+        self.scheme_beneficiaries_counts = scheme_beneficiaries_counts or {}
         self.last_updated = last_updated or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     @classmethod
@@ -50,7 +50,7 @@ class BoothSummary:
             if isinstance(value, dict):
                 return value
             if not value or value == "null" or value == "":
-                return "{}"
+                return {}
             try:
                 return json.loads(value)
             except Exception as e:
@@ -116,6 +116,6 @@ class BoothSummary:
             "age_group_counts": self.age_group_counts,
             "complete_voter_count": self.complete_voter_count,
             "verified_voter_count": self.verified_voter_count,
-            "scheme_beneficiaries_counts": self.scheme_beneficiaries_counts,
+            "scheme_beneficiaries_counts": str(self.scheme_beneficiaries_counts) if isinstance(self.scheme_beneficiaries_counts, dict) else self.scheme_beneficiaries_counts,
             "last_updated": self.last_updated
         }
