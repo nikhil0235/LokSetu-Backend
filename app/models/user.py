@@ -14,6 +14,8 @@ class User:
         assigned_constituencies: List[str] = None,
         assigned_blocks: List[str] = None,
         assigned_panchayats: List[str] = None,
+        district_id: int = None,
+        state_id: int = None,
         party_id: int = None,
         alliance_id: int = None,
         party_name: str = None,
@@ -30,6 +32,8 @@ class User:
         self.assigned_constituencies = assigned_constituencies or []
         self.assigned_blocks = assigned_blocks or []
         self.assigned_panchayats = assigned_panchayats or []
+        self.district_id = district_id
+        self.state_id = state_id
         self.party_id = party_id
         self.alliance_id = alliance_id
         self.party_name = party_name
