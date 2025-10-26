@@ -125,6 +125,14 @@ class PostgresAdapter:
                 cursor.execute("SELECT constituency_id FROM user_constituencies WHERE user_id = %s", (user['user_id'],))
                 user['assigned_constituencies'] = [r[0] for r in cursor.fetchall()]
                 
+                # Get block assignments
+                cursor.execute("SELECT block_id FROM user_blocks WHERE user_id = %s", (user['user_id'],))
+                user['assigned_blocks'] = [r[0] for r in cursor.fetchall()]
+                
+                # Get panchayat assignments
+                cursor.execute("SELECT panchayat_id FROM user_panchayats WHERE user_id = %s", (user['user_id'],))
+                user['assigned_panchayats'] = [r[0] for r in cursor.fetchall()]
+                
                 users.append(user)
             
             return users
@@ -156,11 +164,19 @@ class PostgresAdapter:
                 cursor.execute("SELECT constituency_id FROM user_constituencies WHERE user_id = %s", (user['user_id'],))
                 user['assigned_constituencies'] = [r[0] for r in cursor.fetchall()]
                 
+                # Get block assignments
+                cursor.execute("SELECT block_id FROM user_blocks WHERE user_id = %s", (user['user_id'],))
+                user['assigned_blocks'] = [r[0] for r in cursor.fetchall()]
+                
+                # Get panchayat assignments
+                cursor.execute("SELECT panchayat_id FROM user_panchayats WHERE user_id = %s", (user['user_id'],))
+                user['assigned_panchayats'] = [r[0] for r in cursor.fetchall()]
+                
                 return user
             return None
 
     def create_user(self, user_data):
-        username, role, full_name, phone, assigned_booths, password_hash, email, created_by, assigned_constituencies, party_id, alliance_id = user_data
+        username, role, full_name, phone, assigned_booths, password_hash, email, created_by, assigned_constituencies, party_id, alliance_id, assigned_blocks, assigned_panchayats = user_data
         
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -196,6 +212,30 @@ class PostgresAdapter:
                         (user_id, const_id)
                     )
             
+            # Insert block assignments
+            if assigned_blocks:
+                if isinstance(assigned_blocks, str):
+                    block_ids = [int(b.strip()) for b in assigned_blocks.split(',') if b.strip()]
+                else:
+                    block_ids = assigned_blocks
+                for block_id in block_ids:
+                    cursor.execute(
+                        "INSERT INTO user_blocks (user_id, block_id) VALUES (%s, %s)",
+                        (user_id, block_id)
+                    )
+            
+            # Insert panchayat assignments
+            if assigned_panchayats:
+                if isinstance(assigned_panchayats, str):
+                    panchayat_ids = [int(p.strip()) for p in assigned_panchayats.split(',') if p.strip()]
+                else:
+                    panchayat_ids = assigned_panchayats
+                for panchayat_id in panchayat_ids:
+                    cursor.execute(
+                        "INSERT INTO user_panchayats (user_id, panchayat_id) VALUES (%s, %s)",
+                        (user_id, panchayat_id)
+                    )
+            
             conn.commit()
             return self.get_user_by_id(user_id)
     
@@ -203,9 +243,11 @@ class PostgresAdapter:
         with get_db_connection() as conn:
             cursor = conn.cursor()
             
-            # Handle booth and constituency updates separately
+            # Handle booth, constituency, block, and panchayat updates separately
             booth_updates = updates.pop('assigned_booths', None)
             const_updates = updates.pop('assigned_constituencies', None)
+            block_updates = updates.pop('assigned_blocks', None)
+            panchayat_updates = updates.pop('assigned_panchayats', None)
             # Update main user fields
             if updates:
                 set_clauses = []
@@ -246,6 +288,34 @@ class PostgresAdapter:
                             (user_id, const_id)
                         )
             
+            # Update block assignments
+            if block_updates is not None:
+                cursor.execute("DELETE FROM user_blocks WHERE user_id = %s", (user_id,))
+                if block_updates:
+                    if isinstance(block_updates, str):
+                        block_ids = [int(b.strip()) for b in block_updates.split(',') if b.strip()]
+                    else:
+                        block_ids = block_updates
+                    for block_id in block_ids:
+                        cursor.execute(
+                            "INSERT INTO user_blocks (user_id, block_id) VALUES (%s, %s)",
+                            (user_id, block_id)
+                        )
+            
+            # Update panchayat assignments
+            if panchayat_updates is not None:
+                cursor.execute("DELETE FROM user_panchayats WHERE user_id = %s", (user_id,))
+                if panchayat_updates:
+                    if isinstance(panchayat_updates, str):
+                        panchayat_ids = [int(p.strip()) for p in panchayat_updates.split(',') if p.strip()]
+                    else:
+                        panchayat_ids = panchayat_updates
+                    for panchayat_id in panchayat_ids:
+                        cursor.execute(
+                            "INSERT INTO user_panchayats (user_id, panchayat_id) VALUES (%s, %s)",
+                            (user_id, panchayat_id)
+                        )
+            
             conn.commit()
             return True
     
@@ -283,6 +353,14 @@ class PostgresAdapter:
                 # Get constituency assignments
                 cursor.execute("SELECT constituency_id FROM user_constituencies WHERE user_id = %s", (user['user_id'],))
                 user['assigned_constituencies'] = [r[0] for r in cursor.fetchall()]
+                
+                # Get block assignments
+                cursor.execute("SELECT block_id FROM user_blocks WHERE user_id = %s", (user['user_id'],))
+                user['assigned_blocks'] = [r[0] for r in cursor.fetchall()]
+                
+                # Get panchayat assignments
+                cursor.execute("SELECT panchayat_id FROM user_panchayats WHERE user_id = %s", (user['user_id'],))
+                user['assigned_panchayats'] = [r[0] for r in cursor.fetchall()]
                 
                 return user
             return None
@@ -451,6 +529,12 @@ class PostgresAdapter:
                 
                 cursor.execute("SELECT constituency_id FROM user_constituencies WHERE user_id = %s", (user['user_id'],))
                 user['assigned_constituencies'] = [r[0] for r in cursor.fetchall()]
+                
+                cursor.execute("SELECT block_id FROM user_blocks WHERE user_id = %s", (user['user_id'],))
+                user['assigned_blocks'] = [r[0] for r in cursor.fetchall()]
+                
+                cursor.execute("SELECT panchayat_id FROM user_panchayats WHERE user_id = %s", (user['user_id'],))
+                user['assigned_panchayats'] = [r[0] for r in cursor.fetchall()]
                 
                 return user
             return None

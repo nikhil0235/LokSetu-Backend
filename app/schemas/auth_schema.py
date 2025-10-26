@@ -20,6 +20,8 @@ class LoginResponse(BaseModel):
     role: str
     assigned_booths_ids: list
     assigned_constituencies_ids: list
+    assigned_blocks_ids: list
+    assigned_panchayats_ids: list
     user_id: int
     phone: Optional[str]
     email: Optional[str]

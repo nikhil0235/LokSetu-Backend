@@ -35,6 +35,8 @@ class UserService:
                     "email": u.get("email"),
                     "assigned_booths": u["assigned_booths"],
                     "assigned_constituencies": u.get("assigned_constituencies", ""),
+                    "assigned_blocks": u.get("assigned_blocks", []),
+                    "assigned_panchayats": u.get("assigned_panchayats", []),
                     "party_id": u.get("party_id"),
                     "alliance_id": u.get("alliance_id"),
                     "party_name": u.get("party_name"),
@@ -55,6 +57,8 @@ class UserService:
                 "email": u.get("email"),
                 "assigned_booths": u["assigned_booths"],
                 "assigned_constituencies": u.get("assigned_constituencies", ""),
+                "assigned_blocks": u.get("assigned_blocks", []),
+                "assigned_panchayats": u.get("assigned_panchayats", []),
                 "created_by": u.get("created_by"),
                 "party_id": u.get("party_id"),
                 "alliance_id": u.get("alliance_id"),
@@ -63,8 +67,8 @@ class UserService:
             })
         return all_users
 
-    def create_user(self, username, role, full_name, phone, email, assigned_booths, assigned_constituencies, password_hash, created_by, party_id=None, alliance_id=None):
-        user_data = (username, role, full_name, phone, assigned_booths, password_hash, email, created_by, assigned_constituencies, party_id, alliance_id)
+    def create_user(self, username, role, full_name, phone, email, assigned_booths, assigned_constituencies, password_hash, created_by, party_id=None, alliance_id=None, assigned_blocks="", assigned_panchayats=""):
+        user_data = (username, role, full_name, phone, assigned_booths, password_hash, email, created_by, assigned_constituencies, party_id, alliance_id, assigned_blocks, assigned_panchayats)
         created_user = self.adapter.create_user(user_data)
         return created_user
     
