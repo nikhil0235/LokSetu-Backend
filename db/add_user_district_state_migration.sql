@@ -21,3 +21,11 @@ CREATE INDEX IF NOT EXISTS idx_users_state_id ON users(state_id);
 -- Add comments
 COMMENT ON COLUMN users.district_id IS 'Reference to district table';
 COMMENT ON COLUMN users.state_id IS 'Reference to states table';
+
+
+
+-- votingPreference: partywise voters { BJP: 100, Con: 100 },
+
+-- voted_party: voting,  voted_party { BJP: 10, Cong: 20 } : 400
+
+-- PolledCount: boothLevel boothSummary: boothVotedCount: 600 
