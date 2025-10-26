@@ -176,15 +176,15 @@ class PostgresAdapter:
             return None
 
     def create_user(self, user_data):
-        username, role, full_name, phone, assigned_booths, password_hash, email, created_by, assigned_constituencies, party_id, alliance_id, assigned_blocks, assigned_panchayats = user_data
+        username, role, full_name, phone, assigned_booths, password_hash, email, created_by, assigned_constituencies, party_id, alliance_id, assigned_blocks, assigned_panchayats, district_id, state_id = user_data
         
         with get_db_connection() as conn:
             cursor = conn.cursor()
             
             # Insert user
             cursor.execute(
-                "INSERT INTO users (username, role, full_name, phone, password_hash, email, created_by, party_id, alliance_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING user_id",
-                (username, role, full_name, phone, password_hash, email, created_by, party_id, alliance_id)
+                "INSERT INTO users (username, role, full_name, phone, password_hash, email, created_by, district_id, state_id, party_id, alliance_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING user_id",
+                (username, role, full_name, phone, password_hash, email, created_by, district_id, state_id, party_id, alliance_id)
             )
             user_id = cursor.fetchone()[0]
             

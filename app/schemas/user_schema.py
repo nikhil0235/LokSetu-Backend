@@ -12,6 +12,8 @@ class UserCreate(BaseModel):
     assigned_constituencies: Optional[str] = ""
     assigned_blocks: Optional[str] = ""
     assigned_panchayats: Optional[str] = ""
+    district_id: Optional[int] = None
+    state_id: Optional[int] = None
     party_id: Optional[int] = None
     alliance_id: Optional[int] = None
 
@@ -26,6 +28,8 @@ class UserUpdate(BaseModel):
     assigned_constituencies: Optional[str] = None
     assigned_blocks: Optional[str] = None
     assigned_panchayats: Optional[str] = None
+    district_id: Optional[int] = None
+    state_id: Optional[int] = None
     party_id: Optional[int] = None
     alliance_id: Optional[int] = None
 
@@ -41,6 +45,8 @@ class UserResponse(BaseModel):
     assigned_blocks: List[str]
     assigned_panchayats: List[str]
     created_by: Optional[str]
+    district_id: Optional[int] = None
+    state_id: Optional[int] = None
     party_id: Optional[int] = None
     alliance_id: Optional[int] = None
     party_name: Optional[str] = None

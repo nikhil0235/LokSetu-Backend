@@ -26,6 +26,8 @@ class LoginResponse(BaseModel):
     phone: Optional[str]
     email: Optional[str]
     created_by: Optional[int]
+    district_id: Optional[int] = None
+    state_id: Optional[int] = None
     party_id: Optional[int] = None
     alliance_id: Optional[int] = None
     party_name: Optional[str] = None
