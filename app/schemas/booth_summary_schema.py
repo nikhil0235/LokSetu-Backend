@@ -10,6 +10,9 @@ class BoothSummaryResponse(BaseModel):
     other_gender_voters: int
     voting_preference_counts: Dict[str, int]
     voted_party_counts: Dict[str, int]
+    party_wise_gender_counts: Dict[str, Dict]
+    party_wise_age_group_counts: Dict[str, Dict]
+    party_wise_category_counts: Dict[str, Dict]
     religion_counts: Dict[str, int]
     category_counts: Dict[str, Any]
     education_counts: Dict[str, int]

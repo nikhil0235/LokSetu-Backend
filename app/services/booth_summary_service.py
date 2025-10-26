@@ -31,6 +31,9 @@ class BoothSummaryService:
         # Aggregation counts
         summary.voting_preference_counts = self._count_field(voters, "voting_preference")
         summary.voted_party_counts = self._count_field(voters, "voted_party")
+        summary.party_wise_gender_counts = self._count_party_wise_gender(voters)
+        summary.party_wise_age_group_counts = self._count_party_wise_age_groups(voters)
+        summary.party_wise_category_counts = self._count_party_wise_category(voters)
         summary.religion_counts = self._count_field(voters, "religion")
         summary.category_counts = self._count_nested_field(voters, "category", "caste")
         summary.education_counts = self._count_field(voters, "education_level")
@@ -110,6 +113,72 @@ class BoothSummaryService:
                 count += 1
         return count
 
+    def _count_party_wise_gender(self, voters: List[Dict]) -> Dict[str, Dict]:
+        """Count gender distribution by party"""
+        party_gender = defaultdict(lambda: {"male": 0, "female": 0, "other": 0})
+        
+        for voter in voters:
+            party = voter.get("voting_preference")
+            gender = str(voter.get("gender", "")).upper()
+            
+            if party:
+                if gender == "M":
+                    party_gender[party]["male"] += 1
+                elif gender == "F":
+                    party_gender[party]["female"] += 1
+                else:
+                    party_gender[party]["other"] += 1
+        
+        return dict(party_gender)
+
+    def _count_party_wise_age_groups(self, voters: List[Dict]) -> Dict[str, Dict]:
+        """Count age group distribution by party"""
+        party_age = defaultdict(lambda: {"18-35": 0, "36-55": 0, "56+": 0})
+        
+        for voter in voters:
+            party = voter.get("voting_preference")
+            age = voter.get("age")
+            
+            if party and age:
+                try:
+                    age = int(age)
+                    if 18 <= age <= 35:
+                        party_age[party]["18-35"] += 1
+                    elif 36 <= age <= 55:
+                        party_age[party]["36-55"] += 1
+                    elif age > 56:
+                        party_age[party]["56+"] += 1
+                except ValueError:
+                    pass
+        
+        return dict(party_age)
+
+    def _count_party_wise_category(self, voters: List[Dict]) -> Dict[str, Dict]:
+        """Count category-caste distribution by party (3-level aggregation)"""
+        party_category_caste = defaultdict(lambda: defaultdict(lambda: {"total": 0, "castes": defaultdict(int)}))
+        
+        for voter in voters:
+            party = voter.get("voting_preference")
+            category = voter.get("category")
+            caste = voter.get("caste")
+            
+            if party and category:
+                party_category_caste[party][str(category)]["total"] += 1
+                if caste:
+                    party_category_caste[party][str(category)]["castes"][str(caste)] += 1
+        
+        # Convert nested defaultdict to regular dict
+        result = {}
+        for party, categories in party_category_caste.items():
+            result[party] = {}
+            for category, data in categories.items():
+                result[party][category] = {
+                    "total": data["total"],
+                    "castes": dict(data["castes"])
+                }
+        
+        return result
+
     def update_booth_summary(self, booth_id: int):
         """Update summary for a specific booth"""
         summary = self.calculate_booth_summary(booth_id)
@@ -125,10 +194,11 @@ class BoothSummaryService:
                 """
                 INSERT INTO booth_summaries (
                     booth_id, constituency_id, total_voters, male_voters, female_voters, 
-                    other_gender_voters, voting_preference_counts, voted_party_counts, religion_counts, 
-                    category_counts, education_counts, employment_counts, age_group_counts, 
+                    other_gender_voters, voting_preference_counts, voted_party_counts, 
+                    party_wise_gender_counts, party_wise_age_group_counts, party_wise_category_counts,
+                    religion_counts, category_counts, education_counts, employment_counts, age_group_counts, 
                     complete_voter_count, verified_voter_count, scheme_beneficiaries_counts
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (booth_id) DO UPDATE SET
                     constituency_id = EXCLUDED.constituency_id,
                     total_voters = EXCLUDED.total_voters,
@@ -137,6 +207,9 @@ class BoothSummaryService:
                     other_gender_voters = EXCLUDED.other_gender_voters,
                     voting_preference_counts = EXCLUDED.voting_preference_counts,
                     voted_party_counts = EXCLUDED.voted_party_counts,
+                    party_wise_gender_counts = EXCLUDED.party_wise_gender_counts,
+                    party_wise_age_group_counts = EXCLUDED.party_wise_age_group_counts,
+                    party_wise_category_counts = EXCLUDED.party_wise_category_counts,
                     religion_counts = EXCLUDED.religion_counts,
                     category_counts = EXCLUDED.category_counts,
                     education_counts = EXCLUDED.education_counts,
@@ -152,6 +225,9 @@ class BoothSummaryService:
                     summary.male_voters, summary.female_voters, summary.other_gender_voters,
                     json.dumps(summary.voting_preference_counts),
                     json.dumps(summary.voted_party_counts),
+                    json.dumps(summary.party_wise_gender_counts),
+                    json.dumps(summary.party_wise_age_group_counts),
+                    json.dumps(summary.party_wise_category_counts),
                     json.dumps(summary.religion_counts),
                     json.dumps(summary.category_counts),
                     json.dumps(summary.education_counts),
