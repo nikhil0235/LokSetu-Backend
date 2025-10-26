@@ -10,6 +10,8 @@ class UserCreate(BaseModel):
     email: Optional[str] = ""
     assigned_booths: Optional[str] = ""
     assigned_constituencies: Optional[str] = ""
+    assigned_blocks: Optional[str] = ""
+    assigned_panchayats: Optional[str] = ""
     party_id: Optional[int] = None
     alliance_id: Optional[int] = None
 
@@ -22,6 +24,8 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
     assigned_booths: Optional[str] = None
     assigned_constituencies: Optional[str] = None
+    assigned_blocks: Optional[str] = None
+    assigned_panchayats: Optional[str] = None
     party_id: Optional[int] = None
     alliance_id: Optional[int] = None
 
@@ -34,6 +38,8 @@ class UserResponse(BaseModel):
     email: Optional[str]
     assigned_booths: List[str]
     assigned_constituencies: List[str]
+    assigned_blocks: List[str]
+    assigned_panchayats: List[str]
     created_by: Optional[str]
     party_id: Optional[int] = None
     alliance_id: Optional[int] = None

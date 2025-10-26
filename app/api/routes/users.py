@@ -49,6 +49,8 @@ async def create_user(
     email: str = Form(""),
     assigned_booths: str = Form(""),
     assigned_constituencies: str = Form(""),
+    assigned_blocks: str = Form(""),
+    assigned_panchayats: str = Form(""),
     party_id: int = Form(None),
     alliance_id: int = Form(None),
     user: User = Depends(get_current_user)
@@ -69,7 +71,7 @@ async def create_user(
             raise HTTPException(status_code=400, detail="User cannot belong to both party and alliance")
         
         # Create user via service layer
-        created_user = service.create_user(username, role, full_name, phone, email, assigned_booths, assigned_constituencies, hash_password(password), user["user_id"], party_id, alliance_id)
+        created_user = service.create_user(username, role, full_name, phone, email, assigned_booths, assigned_constituencies, hash_password(password), user["user_id"], party_id, alliance_id, assigned_blocks, assigned_panchayats)
         
         return {
             "message": f"User {username} created successfully with assigned booth ids {assigned_booths} with role {role}",
@@ -119,6 +121,8 @@ async def update_user(
             "phone": "phone",
             "assigned_booths": "assigned_booths",
             "assigned_constituencies": "assigned_constituencies",
+            "assigned_blocks": "assigned_blocks",
+            "assigned_panchayats": "assigned_panchayats",
             "email": "email",
             "party_id": "party_id",
             "alliance_id": "alliance_id"
