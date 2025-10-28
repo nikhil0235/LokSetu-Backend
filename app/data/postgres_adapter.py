@@ -412,14 +412,50 @@ class PostgresAdapter:
     def get_blocks(self, constituency_id=None):
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            query = "SELECT * FROM blocks WHERE 1=1"
+            query = """
+            SELECT 
+                bl.block_id,
+                bl.block_name,
+                bl.constituency_id,
+                COALESCE(
+                    JSON_AGG(
+                        JSON_BUILD_OBJECT(
+                            'panchayat_id', p.panchayat_id,
+                            'panchayat_name', p.panchayat_name,
+                            'booths', p.booths
+                        ) ORDER BY p.panchayat_name
+                    ) FILTER (WHERE p.panchayat_id IS NOT NULL), 
+                    '[]'::json
+                ) as panchayats
+            FROM blocks bl
+            LEFT JOIN (
+                SELECT 
+                    p.panchayat_id,
+                    p.panchayat_name,
+                    p.block_id,
+                    COALESCE(
+                        JSON_AGG(
+                            JSON_BUILD_OBJECT(
+                                'booth_id', b.booth_id,
+                                'booth_number', b.booth_number,
+                                'booth_location', b.booth_location
+                            ) ORDER BY b.booth_number
+                        ) FILTER (WHERE b.booth_id IS NOT NULL),
+                        '[]'::json
+                    ) as booths
+                FROM panchayats p
+                LEFT JOIN booths b ON p.panchayat_id = b.panchayat_id
+                GROUP BY p.panchayat_id, p.panchayat_name, p.block_id
+            ) p ON bl.block_id = p.block_id
+            WHERE 1=1
+            """
             params = []
             
             if constituency_id:
-                query += " AND constituency_id = %s"
+                query += " AND bl.constituency_id = %s"
                 params.append(constituency_id)
             
-            query += " ORDER BY block_name"
+            query += " GROUP BY bl.block_id, bl.block_name, bl.constituency_id ORDER BY bl.block_name"
             cursor.execute(query, params)
             columns = [desc[0] for desc in cursor.description]
             rows = cursor.fetchall()
@@ -428,14 +464,32 @@ class PostgresAdapter:
     def get_panchayats(self, block_id=None):
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            query = "SELECT * FROM panchayats WHERE 1=1"
+            query = """
+            SELECT 
+                p.panchayat_id,
+                p.panchayat_name,
+                p.block_id,
+                COALESCE(
+                    JSON_AGG(
+                        JSON_BUILD_OBJECT(
+                            'booth_id', b.booth_id,
+                            'booth_number', b.booth_number,
+                            'booth_location', b.booth_location
+                        ) ORDER BY b.booth_number
+                    ) FILTER (WHERE b.booth_id IS NOT NULL),
+                    '[]'::json
+                ) as booths
+            FROM panchayats p
+            LEFT JOIN booths b ON p.panchayat_id = b.panchayat_id
+            WHERE 1=1
+            """
             params = []
             
             if block_id:
-                query += " AND block_id = %s"
+                query += " AND p.block_id = %s"
                 params.append(block_id)
             
-            query += " ORDER BY panchayat_name"
+            query += " GROUP BY p.panchayat_id, p.panchayat_name, p.block_id ORDER BY p.panchayat_name"
             cursor.execute(query, params)
             columns = [desc[0] for desc in cursor.description]
             rows = cursor.fetchall()
@@ -444,7 +498,7 @@ class PostgresAdapter:
     def get_booths(self, constituency_id=None, panchayat_id=None):
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            query = "SELECT * FROM booths WHERE 1=1"
+            query = "SELECT booth_id, booth_number, booth_location FROM booths WHERE 1=1"
             params = []
             
             if constituency_id:
