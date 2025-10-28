@@ -22,9 +22,6 @@ async def list_voters(
     booth_id: int,
     user: User = Depends(get_current_user)
 ):
-    if user['role'] != "booth_volunteer" :
-        raise HTTPException(status_code=404, detail="User does not allowed to fetch voters")
-    
     voter_service = VoterService()
 
     if int(booth_id) not in user['assigned_booths'] : 
