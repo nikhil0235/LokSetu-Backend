@@ -29,7 +29,7 @@ async def list_users(
         user_booth_ids = set(user.get("assigned_booths", []))
         filtered_users = []
         for u in all_users:
-            booth_ids = set(u.get("assigned_constituencies", ""))
+            booth_ids = set(u.get("assigned_booths", ""))
             if (user_booth_ids & booth_ids) and ROLE_RANK[u.get("role")]-ROLE_RANK[user["role"]] == 1:
                 filtered_users.append(u)
         
