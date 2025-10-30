@@ -85,7 +85,7 @@ CREATE TABLE users (
         (party_id IS NOT NULL AND alliance_id IS NULL) OR 
         (party_id IS NULL AND alliance_id IS NOT NULL) OR 
         (party_id IS NULL AND alliance_id IS NULL)
-    )1`
+    )
 
 -- User constituency assignmentss
 CREATE TABLE user_constituencies (

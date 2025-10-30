@@ -1,0 +1,108 @@
+Dump Booth and all data (add magic number in booth ids), check column names and excel file sheet name
+    :run dump_lakhisarai_data
+
+Convert Voters data to csv file (do not forget to add magic no in booth ids and check excel sheet and column)
+
+Upload csv file to s3
+
+drop table voters_staging
+
+CREATE TABLE voters_staging (
+    serial_no_in_list INT,
+    voter_fname TEXT,
+    voter_lname TEXT,
+    voter_fname_hin TEXT,
+    voter_lname_hin TEXT,
+    relation TEXT,
+    guardian_fname TEXT,
+    guardian_lname TEXT,
+    guardian_fname_hin TEXT,
+    guardian_lname_hin TEXT,
+    epic_id TEXT,
+    gender TEXT,
+    house_no TEXT,
+    booth_id INT,
+    age INT,
+    constituency_id INT
+);
+
+
+CREATE EXTENSION IF NOT EXISTS aws_s3 CASCADE;
+
+SELECT aws_s3.table_import_from_s3(
+    'voters_staging',      -- target table name
+    '',                    -- all columns (you can specify column list here)
+    'DELIMITER '','' CSV HEADER',  -- file format
+    'vistaaranalytics',           -- S3 bucket name
+    'suryagarha_voters.csv',  -- S3 object key
+    'ap-south-1'            -- your AWS region
+);
+
+
+select * from voters_staging limit 10
+
+CREATE TABLE voters_backup_lakhisarai AS TABLE voters;
+select count(*) from voters_backup_lakhisarai 
+
+SELECT epic_id, COUNT(*) AS count
+FROM voters_staging
+GROUP BY epic_id
+HAVING COUNT(*) > 1;
+
+BR/32/187357349
+BR/33/190/489349
+select * from voters_staging where epic_id = 'BR/32/187357349'
+update voters_staging set epic_id = 'BR/32/1873573490' where epic_id = 'BR/32/187357349' and serial_no_in_list = 303
+
+
+        ALTER TABLE voters DISABLE TRIGGER ALL;
+
+        -- Run your insert
+        INSERT INTO voters (...) SELECT ... FROM voters_staging;
+
+        -- Re-enable triggers
+        ALTER TABLE voters ENABLE TRIGGER ALL;
+
+        -- Rebuild indexes if needed
+        REINDEX TABLE voters;
+
+
+INSERT INTO voters (
+    serial_no_in_list,
+    voter_fname,
+    voter_lname,
+    voter_fname_hin,
+    voter_lname_hin,
+    relation,
+    guardian_fname,
+    guardian_lname,
+    guardian_fname_hin,
+    guardian_lname_hin,
+    epic_id,
+    gender,
+    house_no,
+    booth_id,
+    age,
+    constituency_id
+)
+SELECT
+    serial_no_in_list,
+    voter_fname,
+    voter_lname,
+    voter_fname_hin,
+    voter_lname_hin,
+    relation,
+    guardian_fname,
+    guardian_lname,
+    guardian_fname_hin,
+    guardian_lname_hin,
+    epic_id,
+    gender,
+    house_no,
+    booth_id,
+    age,
+    constituency_id
+FROM voters_staging
+ORDER BY serial_no_in_list
+LIMIT 100000 OFFSET 150000
+ON CONFLICT (epic_id) DO NOTHING;

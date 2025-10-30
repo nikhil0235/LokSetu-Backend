@@ -58,23 +58,32 @@ async def create_user(
     user: User = Depends(get_current_user)
 ):
     try:
+        logger.info(f"🚀 Creating user: {username}, role: {role}")
+        logger.info(f"📋 Form data - booths: {assigned_booths[:100]}..., constituencies: {assigned_constituencies}, party_id: {party_id}")
+        
         if ROLE_RANK[user["role"]] > ROLE_RANK[role]:
+            logger.error(f"❌ Role validation failed: current user role {user['role']} cannot create {role}")
             raise HTTPException(status_code=403, detail="Cannot create user with higher role than current user")
 
         service = UserService()
         
         # Check if username exists
+        logger.info(f"🔍 Checking if username {username} exists...")
         existing_user = service.get_user_by_username(username)
         if existing_user:
+            logger.error(f"❌ Username {username} already exists")
             raise HTTPException(status_code=400, detail="Username already exists")
 
         # Validate party/alliance constraint
         if party_id and alliance_id:
+            logger.error(f"❌ Party/alliance validation failed: party_id={party_id}, alliance_id={alliance_id}")
             raise HTTPException(status_code=400, detail="User cannot belong to both party and alliance")
         
+        logger.info(f"✅ Validation passed, creating user via service layer...")
         # Create user via service layer
         created_user = service.create_user(username, role, full_name, phone, email, assigned_booths, assigned_constituencies, hash_password(password), user["user_id"], party_id, alliance_id, assigned_blocks, assigned_panchayats, district_id, state_id)
         
+        logger.info(f"✅ User {username} created successfully with ID: {created_user['user_id']}")
         return {
             "message": f"User {username} created successfully with assigned booth ids {assigned_booths} with role {role}",
             "user_id": created_user["user_id"],
@@ -84,7 +93,8 @@ async def create_user(
         raise
     except Exception as e:
         error_msg = str(e).lower()
-        logger.error(f"Error creating user {username}: {str(e)}")
+        logger.error(f"💥 Error creating user {username}: {str(e)}")
+        logger.error(f"📊 Full error details: {repr(e)}")
         
         # Handle specific constraint violations
         if "unique constraint" in error_msg or "duplicate key" in error_msg:

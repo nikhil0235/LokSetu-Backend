@@ -177,16 +177,18 @@ class PostgresAdapter:
 
     def create_user(self, user_data):
         username, role, full_name, phone, assigned_booths, password_hash, email, created_by, assigned_constituencies, party_id, alliance_id, assigned_blocks, assigned_panchayats, district_id, state_id = user_data
-        
+    
         with get_db_connection() as conn:
             cursor = conn.cursor()
             
             # Insert user
+            print(f"🔧 DB: Inserting user {username} with party_id={party_id}, alliance_id={alliance_id}")
             cursor.execute(
                 "INSERT INTO users (username, role, full_name, phone, password_hash, email, created_by, district_id, state_id, party_id, alliance_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING user_id",
                 (username, role, full_name, phone, password_hash, email, created_by, district_id, state_id, party_id, alliance_id)
             )
             user_id = cursor.fetchone()[0]
+            print(f"✅ DB: User created with ID: {user_id}")
             
             # Insert booth assignments
             if assigned_booths:
@@ -194,6 +196,7 @@ class PostgresAdapter:
                     booth_ids = [int(b.strip()) for b in assigned_booths.split(',') if b.strip()]
                 else:
                     booth_ids = assigned_booths
+                print(f"🏢 DB: Assigning {len(booth_ids)} booths to user {user_id}")
                 for booth_id in booth_ids:
                     cursor.execute(
                         "INSERT INTO user_booths (user_id, booth_id) VALUES (%s, %s)",
@@ -206,6 +209,7 @@ class PostgresAdapter:
                     const_ids = [int(c.strip()) for c in assigned_constituencies.split(',') if c.strip()]
                 else:
                     const_ids = assigned_constituencies
+                print(f"🗳️ DB: Assigning {len(const_ids)} constituencies to user {user_id}")
                 for const_id in const_ids:
                     cursor.execute(
                         "INSERT INTO user_constituencies (user_id, constituency_id) VALUES (%s, %s)",
@@ -237,6 +241,7 @@ class PostgresAdapter:
                     )
             
             conn.commit()
+            print(f"✅ DB: Transaction committed for user {user_id}")
             return self.get_user_by_id(user_id)
     
     def update_user(self, user_id, updates):
