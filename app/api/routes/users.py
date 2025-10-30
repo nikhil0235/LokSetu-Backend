@@ -25,13 +25,14 @@ async def list_users(
 ):
     try:
         service = UserService()
-        all_users = service.get_all_users()
-        user_booth_ids = set(user.get("assigned_booths", []))
-        filtered_users = []
-        for u in all_users:
-            booth_ids = set(u.get("assigned_booths", ""))
-            if (user_booth_ids & booth_ids) and ROLE_RANK[u.get("role")]-ROLE_RANK[user["role"]] == 1:
-                filtered_users.append(u)
+        user_booth_ids = user.get("assigned_booths", [])
+        current_user_role_rank = ROLE_RANK[user["role"]]
+        
+        filtered_users = service.get_filtered_users(
+            current_user_booths=user_booth_ids,
+            current_user_role=user["role"],
+            target_role_rank=current_user_role_rank
+        )
         
         return filtered_users
     except Exception as e:

@@ -99,54 +99,89 @@ class PostgresAdapter:
             conn.commit()
             return True
 
-    def get_users(self):
+    def get_users(self, current_user_booths=None, current_user_role=None, target_role_rank=None):
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                """
-                SELECT u.*, p.party_name, a.alliance_name 
+            
+            base_query = """
+                SELECT 
+                    u.*, p.party_name, a.alliance_name,
+                    COALESCE(array_agg(DISTINCT ub.booth_id) FILTER (WHERE ub.booth_id IS NOT NULL), '{}') as assigned_booths,
+                    COALESCE(array_agg(DISTINCT uc.constituency_id) FILTER (WHERE uc.constituency_id IS NOT NULL), '{}') as assigned_constituencies,
+                    COALESCE(array_agg(DISTINCT ubl.block_id) FILTER (WHERE ubl.block_id IS NOT NULL), '{}') as assigned_blocks,
+                    COALESCE(array_agg(DISTINCT up.panchayat_id) FILTER (WHERE up.panchayat_id IS NOT NULL), '{}') as assigned_panchayats
                 FROM users u 
                 LEFT JOIN parties p ON u.party_id = p.party_id 
                 LEFT JOIN alliances a ON u.alliance_id = a.alliance_id
-                """
-            )
+                LEFT JOIN user_booths ub ON u.user_id = ub.user_id
+                LEFT JOIN user_constituencies uc ON u.user_id = uc.user_id
+                LEFT JOIN user_blocks ubl ON u.user_id = ubl.user_id
+                LEFT JOIN user_panchayats up ON u.user_id = up.user_id
+            """
+            
+            params = []
+            where_conditions = []
+            
+            # Add filtering for booth overlap and role hierarchy
+            if current_user_booths and target_role_rank is not None:
+                where_conditions.append("""
+                    EXISTS (
+                        SELECT 1 FROM user_booths ub2 
+                        WHERE ub2.user_id = u.user_id 
+                        AND ub2.booth_id = ANY(%s)
+                    )
+                """)
+                params.append(current_user_booths)
+                
+                # Add role rank filtering using CASE statement
+                role_cases = []
+                role_ranks = {
+                    "super_admin": 1, "political_party": 2, "district_prabhari": 3,
+                    "candidate": 4, "vidhan_sabha_prabhari": 5, "block_prabhari": 6,
+                    "panchayat_prabhari": 7, "booth_volunteer": 8
+                }
+                
+                for role, rank in role_ranks.items():
+                    role_cases.append(f"WHEN u.role = '{role}' THEN {rank}")
+                
+                where_conditions.append(f"""
+                    (CASE {' '.join(role_cases)} ELSE 999 END) - %s = 1
+                """)
+                params.append(target_role_rank)
+            
+            if where_conditions:
+                query = base_query + " WHERE " + " AND ".join(where_conditions)
+            else:
+                query = base_query
+                
+            query += " GROUP BY u.user_id, p.party_name, a.alliance_name"
+            
+            cursor.execute(query, params)
             columns = [desc[0] for desc in cursor.description]
             rows = cursor.fetchall()
             
-            users = []
-            for row in rows:
-                user = dict(zip(columns, row))
-                
-                # Get booth assignments
-                cursor.execute("SELECT booth_id FROM user_booths WHERE user_id = %s", (user['user_id'],))
-                user['assigned_booths'] = [r[0] for r in cursor.fetchall()]
-                
-                # Get constituency assignments
-                cursor.execute("SELECT constituency_id FROM user_constituencies WHERE user_id = %s", (user['user_id'],))
-                user['assigned_constituencies'] = [r[0] for r in cursor.fetchall()]
-                
-                # Get block assignments
-                cursor.execute("SELECT block_id FROM user_blocks WHERE user_id = %s", (user['user_id'],))
-                user['assigned_blocks'] = [r[0] for r in cursor.fetchall()]
-                
-                # Get panchayat assignments
-                cursor.execute("SELECT panchayat_id FROM user_panchayats WHERE user_id = %s", (user['user_id'],))
-                user['assigned_panchayats'] = [r[0] for r in cursor.fetchall()]
-                
-                users.append(user)
-            
-            return users
+            return [dict(zip(columns, row)) for row in rows]
         
     def get_user_by_username(self, username: str):
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                SELECT u.*, p.party_name, a.alliance_name 
+                SELECT 
+                    u.*, p.party_name, a.alliance_name,
+                    COALESCE(array_agg(DISTINCT ub.booth_id) FILTER (WHERE ub.booth_id IS NOT NULL), '{}') as assigned_booths,
+                    COALESCE(array_agg(DISTINCT uc.constituency_id) FILTER (WHERE uc.constituency_id IS NOT NULL), '{}') as assigned_constituencies,
+                    COALESCE(array_agg(DISTINCT ubl.block_id) FILTER (WHERE ubl.block_id IS NOT NULL), '{}') as assigned_blocks,
+                    COALESCE(array_agg(DISTINCT up.panchayat_id) FILTER (WHERE up.panchayat_id IS NOT NULL), '{}') as assigned_panchayats
                 FROM users u 
                 LEFT JOIN parties p ON u.party_id = p.party_id 
-                LEFT JOIN alliances a ON u.alliance_id = a.alliance_id 
+                LEFT JOIN alliances a ON u.alliance_id = a.alliance_id
+                LEFT JOIN user_booths ub ON u.user_id = ub.user_id
+                LEFT JOIN user_constituencies uc ON u.user_id = uc.user_id
+                LEFT JOIN user_blocks ubl ON u.user_id = ubl.user_id
+                LEFT JOIN user_panchayats up ON u.user_id = up.user_id
                 WHERE u.username = %s
+                GROUP BY u.user_id, p.party_name, a.alliance_name
                 """, 
                 (username,)
             )
@@ -154,25 +189,7 @@ class PostgresAdapter:
 
             if row:
                 columns = [desc[0] for desc in cursor.description]
-                user = dict(zip(columns, row))
-                
-                # Get booth assignments
-                cursor.execute("SELECT booth_id FROM user_booths WHERE user_id = %s", (user['user_id'],))
-                user['assigned_booths'] = [r[0] for r in cursor.fetchall()]
-                
-                # Get constituency assignments
-                cursor.execute("SELECT constituency_id FROM user_constituencies WHERE user_id = %s", (user['user_id'],))
-                user['assigned_constituencies'] = [r[0] for r in cursor.fetchall()]
-                
-                # Get block assignments
-                cursor.execute("SELECT block_id FROM user_blocks WHERE user_id = %s", (user['user_id'],))
-                user['assigned_blocks'] = [r[0] for r in cursor.fetchall()]
-                
-                # Get panchayat assignments
-                cursor.execute("SELECT panchayat_id FROM user_panchayats WHERE user_id = %s", (user['user_id'],))
-                user['assigned_panchayats'] = [r[0] for r in cursor.fetchall()]
-                
-                return user
+                return dict(zip(columns, row))
             return None
 
     def create_user(self, user_data):

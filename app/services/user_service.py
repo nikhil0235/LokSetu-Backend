@@ -70,6 +70,31 @@ class UserService:
                 "alliance_name": u.get("alliance_name")
             })
         return all_users
+    
+    def get_filtered_users(self, current_user_booths=None, current_user_role=None, target_role_rank=None):
+        users = self.adapter.get_users(current_user_booths, current_user_role, target_role_rank)
+        filtered_users = []
+        for u in users:
+            filtered_users.append({
+                "user_id": u["user_id"],
+                "username": u["username"],
+                "full_name": u.get("full_name"),
+                "role": u["role"],
+                "phone": u.get("phone"),
+                "email": u.get("email"),
+                "assigned_booths": u["assigned_booths"],
+                "assigned_constituencies": u.get("assigned_constituencies", ""),
+                "assigned_blocks": u.get("assigned_blocks", []),
+                "assigned_panchayats": u.get("assigned_panchayats", []),
+                "created_by": u.get("created_by"),
+                "district_id": u.get("district_id"),
+                "state_id": u.get("state_id"),
+                "party_id": u.get("party_id"),
+                "alliance_id": u.get("alliance_id"),
+                "party_name": u.get("party_name"),
+                "alliance_name": u.get("alliance_name")
+            })
+        return filtered_users
 
     def create_user(self, username, role, full_name, phone, email, assigned_booths, assigned_constituencies, password_hash, created_by, party_id=None, alliance_id=None, assigned_blocks="", assigned_panchayats="", district_id=None, state_id=None):
         user_data = (username, role, full_name, phone, assigned_booths, password_hash, email, created_by, assigned_constituencies, party_id, alliance_id, assigned_blocks, assigned_panchayats, district_id, state_id)
