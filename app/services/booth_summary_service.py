@@ -24,8 +24,8 @@ class BoothSummaryService:
 
         # Basic counts
         summary.total_voters = len(voters)
-        summary.male_voters = sum(1 for v in voters if str(v.get("gender", "")).upper() == "M")
-        summary.female_voters = sum(1 for v in voters if str(v.get("gender", "")).upper() == "F")
+        summary.male_voters = sum(1 for v in voters if str(v.get("gender", "")).upper() in ["M", "MALE"])
+        summary.female_voters = sum(1 for v in voters if str(v.get("gender", "")).upper() in ["F", "FEMALE"])
         summary.other_gender_voters = summary.total_voters - summary.male_voters - summary.female_voters
 
         # Aggregation counts
@@ -122,9 +122,9 @@ class BoothSummaryService:
             gender = str(voter.get("gender", "")).upper()
             
             if party:
-                if gender == "M":
+                if gender in ["M", "MALE"]:
                     party_gender[party]["male"] += 1
-                elif gender == "F":
+                elif gender in ["F", "FEMALE"]:
                     party_gender[party]["female"] += 1
                 else:
                     party_gender[party]["other"] += 1
