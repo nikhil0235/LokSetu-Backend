@@ -197,8 +197,8 @@ class BoothSummaryService:
                     other_gender_voters, voting_preference_counts, voted_party_counts, 
                     party_wise_gender_counts, party_wise_age_group_counts, party_wise_category_counts,
                     religion_counts, category_counts, education_counts, employment_counts, age_group_counts, 
-                    complete_voter_count, verified_voter_count, scheme_beneficiaries_counts
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    complete_voter_count, verified_voter_count, scheme_beneficiaries_counts, polled_count
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (booth_id) DO UPDATE SET
                     constituency_id = EXCLUDED.constituency_id,
                     total_voters = EXCLUDED.total_voters,
@@ -207,6 +207,7 @@ class BoothSummaryService:
                     other_gender_voters = EXCLUDED.other_gender_voters,
                     voting_preference_counts = EXCLUDED.voting_preference_counts,
                     voted_party_counts = EXCLUDED.voted_party_counts,
+                    polled_count = EXCLUDED.polled_count,
                     party_wise_gender_counts = EXCLUDED.party_wise_gender_counts,
                     party_wise_age_group_counts = EXCLUDED.party_wise_age_group_counts,
                     party_wise_category_counts = EXCLUDED.party_wise_category_counts,
@@ -235,7 +236,8 @@ class BoothSummaryService:
                     json.dumps(summary.age_group_counts),
                     summary.complete_voter_count,
                     summary.verified_voter_count,
-                    json.dumps(summary.scheme_beneficiaries_counts)
+                    json.dumps(summary.scheme_beneficiaries_counts),
+                    summary.polled_count
                 )
             )
             conn.commit()

@@ -20,6 +20,7 @@ class BoothSummaryResponse(BaseModel):
     age_group_counts: Dict[str, int]
     complete_voter_count: int
     verified_voter_count: int
+    polled_count: int
     last_updated: Optional[str]
     scheme_beneficiaries_counts: Optional[str]
     class Config:

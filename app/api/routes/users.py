@@ -123,8 +123,16 @@ async def update_user(
             raise HTTPException(status_code=404, detail="User not found")
         
         current_role = target_user['role']
-        if ROLE_RANK[user["role"]] > ROLE_RANK[current_role]:
+        # Allow users to update their own password
+        if ROLE_RANK[user["role"]] >= ROLE_RANK[current_role]:
             raise HTTPException(status_code=403, detail="Only higher roles can update this user")
+        
+        # If user is updating their own profile, only allow certain fields
+        if userId == user["user_id"]:
+            allowed_self_fields = {"password", "full_name", "phone", "email"}
+            invalid_fields = set(updates.keys()) - allowed_self_fields
+            if invalid_fields:
+                raise HTTPException(status_code=403, detail=f"Cannot update fields: {', '.join(invalid_fields)}")
         
         # Map fields and hash password if needed
         field_mapping = {
@@ -140,7 +148,8 @@ async def update_user(
             "district_id": "district_id",
             "state_id": "state_id",
             "party_id": "party_id",
-            "alliance_id": "alliance_id"
+            "alliance_id": "alliance_id",
+            "password": "password_hash"
         }
         
         db_updates = {}
@@ -154,7 +163,8 @@ async def update_user(
         if db_updates:
             service.update_user(userId, db_updates)
         
-        return {"message": f"User {userId} updated", "success": True}
+            message = "Profile updated successfully" if userId == user["user_id"] else f"User {userId} updated"
+        return {"message": message, "success": True}
     except HTTPException:
         raise
     except Exception as e:

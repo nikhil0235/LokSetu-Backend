@@ -23,6 +23,7 @@ class BoothSummary:
         complete_voter_count: int = 0,
         verified_voter_count: int = 0,
         scheme_beneficiaries_counts: Dict[str, Any] = None,
+        polled_count: int = 0,
         last_updated: str = None,
         **kwargs
     ):
@@ -45,6 +46,7 @@ class BoothSummary:
         self.complete_voter_count = complete_voter_count
         self.verified_voter_count = verified_voter_count
         self.scheme_beneficiaries_counts = scheme_beneficiaries_counts or {}
+        self.polled_count = polled_count
         self.last_updated = last_updated or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     @classmethod
@@ -83,6 +85,7 @@ class BoothSummary:
             complete_voter_count=data.get("complete_voter_count", 0),
             verified_voter_count=data.get("verified_voter_count", 0),
             scheme_beneficiaries_counts=safe_json(data.get("scheme_beneficiaries_counts")),
+            polled_count=data.get("polled_count", 0),
             last_updated=str(data.get("last_updated")) if data.get("last_updated") else None
         )
         return instace
@@ -108,6 +111,7 @@ class BoothSummary:
             "complete_voter_count": self.complete_voter_count,
             "verified_voter_count": self.verified_voter_count,
             "scheme_beneficiaries_counts": str(self.scheme_beneficiaries_counts),
+            "polled_count": self.polled_count,
             "last_updated": self.last_updated
         }
     
@@ -132,5 +136,6 @@ class BoothSummary:
             "complete_voter_count": self.complete_voter_count,
             "verified_voter_count": self.verified_voter_count,
             "scheme_beneficiaries_counts": str(self.scheme_beneficiaries_counts) if isinstance(self.scheme_beneficiaries_counts, dict) else self.scheme_beneficiaries_counts,
+            "polled_count": self.polled_count,
             "last_updated": self.last_updated
         }
