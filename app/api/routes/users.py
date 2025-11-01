@@ -124,7 +124,7 @@ async def update_user(
         
         current_role = target_user['role']
         # Allow users to update their own password
-        if ROLE_RANK[user["role"]] >= ROLE_RANK[current_role]:
+        if ROLE_RANK[user["role"]] > ROLE_RANK[current_role]:
             raise HTTPException(status_code=403, detail="Only higher roles can update this user")
         
         # If user is updating their own profile, only allow certain fields
