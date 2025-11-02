@@ -122,8 +122,8 @@ class PostgresAdapter:
             params = []
             where_conditions = []
             
-            # Add filtering for booth overlap and role hierarchy
-            if current_user_booths and target_role_rank is not None:
+            # Add filtering for booth overlap only
+            if current_user_booths:
                 where_conditions.append("""
                     EXISTS (
                         SELECT 1 FROM user_booths ub2 
@@ -132,22 +132,6 @@ class PostgresAdapter:
                     )
                 """)
                 params.append(current_user_booths)
-                
-                # Add role rank filtering using CASE statement
-                role_cases = []
-                role_ranks = {
-                    "super_admin": 1, "political_party": 2, "district_prabhari": 3,
-                    "candidate": 4, "vidhan_sabha_prabhari": 5, "block_prabhari": 6,
-                    "panchayat_prabhari": 7, "booth_volunteer": 8
-                }
-                
-                for role, rank in role_ranks.items():
-                    role_cases.append(f"WHEN u.role = '{role}' THEN {rank}")
-                
-                where_conditions.append(f"""
-                    (CASE {' '.join(role_cases)} ELSE 999 END) - %s = 1
-                """)
-                params.append(target_role_rank)
             
             if where_conditions:
                 query = base_query + " WHERE " + " AND ".join(where_conditions)
