@@ -76,6 +76,8 @@ CREATE TABLE users (
     phone VARCHAR(20),
     email VARCHAR(255),
     party_id INTEGER REFERENCES parties(party_id),
+    district_id INTEGER REFERENCES district(district_id),
+    state_id INTEGER REFERENCES states(state_id)
     alliance_id INTEGER REFERENCES alliances(alliance_id),
     created_by INTEGER REFERENCES users(user_id),
     is_active BOOLEAN DEFAULT true,
@@ -92,6 +94,25 @@ CREATE TABLE user_constituencies (
     user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
     constituency_id INTEGER REFERENCES constituencies(constituency_id),
     PRIMARY KEY (user_id, constituency_id)
+);
+
+CREATE TABLE IF NOT EXISTS user_blocks (
+    user_id INTEGER NOT NULL,
+    block_id INTEGER NOT NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, block_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (block_id) REFERENCES blocks(block_id) ON DELETE CASCADE
+);
+
+-- Create user_panchayats junction table
+CREATE TABLE IF NOT EXISTS user_panchayats (
+    user_id INTEGER NOT NULL,
+    panchayat_id INTEGER NOT NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, panchayat_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (panchayat_id) REFERENCES panchayats(panchayat_id) ON DELETE CASCADE
 );
 
 -- User booth assignments
@@ -352,6 +373,7 @@ CREATE TABLE booth_summaries (
     male_voters INTEGER DEFAULT 0,
     female_voters INTEGER DEFAULT 0,
     other_gender_voters INTEGER DEFAULT 0,
+    polled_count INTEGER DEFAULT 0,
     voting_preference_counts JSONB,
     voted_party_counts JSONB,
     religion_counts JSONB,
@@ -359,6 +381,9 @@ CREATE TABLE booth_summaries (
     education_counts JSONB,
     employment_counts JSONB,
     age_group_counts JSONB,
+    party_wise_gender_counts JSONB,
+    party_wise_age_group_counts JSONB,
+    party_wise_category_counts JSONB,
     complete_voter_count INTEGER DEFAULT 0,
     verified_voter_count INTEGER DEFAULT 0,
     scheme_beneficiaries_counts JSONB,
