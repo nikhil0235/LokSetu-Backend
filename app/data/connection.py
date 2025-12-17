@@ -1,8 +1,6 @@
 import os
-import json
-import boto3
-import psycopg
-from psycopg_pool import ConnectionPool
+import psycopg2
+from psycopg2 import pool
 from contextlib import contextmanager
 import logging
 from dotenv import load_dotenv
@@ -25,40 +23,50 @@ class DatabaseManager:
             self.initialized = True
             self._setup_connection_pool()
     
-    def _get_db_credentials(self):
-        secret_name = os.getenv('DB_SECRET_NAME')
-        region = os.getenv('AWS_REGION', 'us-east-1')
+    # def _get_db_credentials(self):
+    #     secret_name = os.getenv('DB_SECRET_NAME')
+    #     region = os.getenv('AWS_REGION', 'us-east-1')
         
-        if not secret_name:
-            return {
-                'username': os.getenv('DB_USER', 'postgres'),
-                'password': os.getenv('DB_PASSWORD', 'password')
-            }
+    #     if not secret_name:
+    #         return {
+    #             'username': os.getenv('DB_USER', 'postgres'),
+    #             'password': os.getenv('DB_PASSWORD', 'password')
+    #         }
         
-        try:
-            session = boto3.session.Session(
-                aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-                aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-                region_name=region
-            )
-            client = session.client('secretsmanager')
-            response = client.get_secret_value(SecretId=secret_name)
-            secret = json.loads(response['SecretString'])
-            return {
-                'username': secret['username'],
-                'password': secret['password']
-            }
-        except Exception as e:
-            logger.error(f"Failed to retrieve credentials from Secrets Manager: {e}")
-            raise
+    #     try:
+    #         session = boto3.session.Session(
+    #             aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    #             aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+    #             region_name=region
+    #         )
+    #         client = session.client('secretsmanager')
+    #         response = client.get_secret_value(SecretId=secret_name)
+    #         secret = json.loads(response['SecretString'])
+    #         return {
+    #             'username': secret['username'],
+    #             'password': secret['password']
+    #         }
+    #     except Exception as e:
+    #         logger.error(f"Failed to retrieve credentials from Secrets Manager: {e}")
+    #         raise
     
     def _setup_connection_pool(self):
         try:
-            credentials = self._get_db_credentials()
-            
-            conninfo = f"host={os.getenv('DB_HOST', 'localhost')} port={os.getenv('DB_PORT', '5432')} dbname={os.getenv('DB_NAME', 'voter_management')} user={credentials['username']} password={credentials['password']} sslmode={os.getenv('DB_SSLMODE', 'require')}"
-            
-            self._connection_pool = ConnectionPool(conninfo, min_size=1, max_size=20)
+            supabase_db_url = os.getenv("SUPABASE_DB_URL")
+            if not supabase_db_url:
+                raise RuntimeError("SUPABASE_DB_URL is not set")
+
+            self._connection_pool = pool.ThreadedConnectionPool(
+                minconn=1,
+                maxconn=20,
+                host=os.getenv("SUPABASE_DB_HOST"),
+                port=int(os.getenv("SUPABASE_DB_PORT", "5432")),
+                database=os.getenv("SUPABASE_DB_NAME", "postgres"),
+                user=os.getenv("SUPABASE_DB_USER"),
+                password=os.getenv("SUPABASE_DB_PASSWORD"),
+                sslmode=os.getenv("SUPABASE_DB_SSLMODE", "require"),
+                gssencmode="disable"
+            )
             
             logger.info("Database connection pool created successfully")
             
@@ -83,7 +91,7 @@ class DatabaseManager:
     
     def close_all_connections(self):
         if self._connection_pool:
-            self._connection_pool.close()
+            self._connection_pool.closeall()
             logger.info("All database connections closed")
 
 db_manager = DatabaseManager()
